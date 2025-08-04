@@ -95,10 +95,8 @@ const AddScheduleForm = () => {
 
   return (
     <View style={{ padding: 16 }}>
-      {/* Feed name */}
       <InputSearch label="Flock Name" placeholder="e.g. Flock One" />
 
-      {/* Feed type */}
       <View style={{ marginTop: 12 }}>
         <Text style={styles.h6}>Feed</Text>
         <TextInput
@@ -109,7 +107,6 @@ const AddScheduleForm = () => {
         />
       </View>
 
-      {/* Amount */}
       <View style={{ marginTop: 12 }}>
         <Text style={styles.h6}>Amount</Text>
         <TextInput
@@ -124,7 +121,6 @@ const AddScheduleForm = () => {
         />
       </View>
 
-      {/* Repeat days */}
       <View style={{ marginTop: 12 }}>
         <Text style={styles.h6}>Repeat</Text>
         <View

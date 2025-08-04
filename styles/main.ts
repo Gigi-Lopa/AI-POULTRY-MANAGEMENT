@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   },
   checkBox: {
-    width: "48%",
+    width: "45%",
     marginBottom: 15,
     flexDirection: "row",
   },
