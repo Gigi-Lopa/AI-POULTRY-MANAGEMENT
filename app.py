@@ -10,7 +10,8 @@ from pprint import pprint
 import pytz
 import os
 
-
+#TEST USER ID 689301dbdcf6195cbe60e128
+#ollama run  llama3.2:1b-instruct-q4_K_M 
 app = Flask(__name__)
 api = Api(app=app)
 cat_tz = pytz.timezone('Africa/Harare')
@@ -141,14 +142,26 @@ class Flocks(Resource):
                 "message": f"Missing required fields: {', '.join(missing_fields)}"
             }, 400  
         
+        current_flock = flocks.find_one({
+            "flockOwner" : str(data.get("id")),
+            "flockName" : data["flockName"]
+        })
+
+        if current_flock:
+            return {
+                "success" : False,
+                "isExist" : True,
+                "message" : "Flock already exists"
+            }, 400
+
         flockData = {
             "flockOwner" : str(data.get("id")),
             "flockName": data["flockName"],
-            "breedType": self.breedTypes.get(data["breedType"]),
+            "breedType": data["breedType"],
             "numberOfBirds": data["numberOfBirds"],
             "age": data["age"],
             "locationCoop": data["locationCoop"],
-            "flockPurpose": self.flockPurposes.get(data["flockPurpose"])
+            "flockPurpose": data["flockPurpose"]
         }
         try:
             insert_result = flocks.insert_one(flockData)
@@ -157,7 +170,6 @@ class Flocks(Resource):
             flockData["_id"] = str(flockData["_id"]) 
             flockData.pop("flockOwner")
 
-            pprint(flockData)
             return {
                 "success": True,
                 "flock": flockData,
@@ -248,7 +260,76 @@ class Flocks(Resource):
                 "success": False,
                 "message": "An error occurred while deleting the flock."
             }, 500
-          
+    
+    def get(self):
+        id = request.args.get("id")
+        if not id:
+            return {
+                "success": False,
+                "message": "User ID is required."
+            }, 400
+        
+        try:
+            flocks_ = list(flocks.find({"flockOwner" : str(id)}))
+            for flock in flocks_:
+                flock["_id"] = str(flock["_id"])
+                flock["age"] = str(flock["age"])
+                flock["numberOfBirds"] = str(flock["numberOfBirds"])
+                flock["breedType"]= flock["breedType"]["value"]
+                flock["flockPurpose"] = flock["flockPurpose"]["value"]
+                
+            return {
+                "success" : True,
+                "message" : "Flocks pulled successfully",
+                "flocks" : flocks_
+            }, 200
+           
+        except Exception as e:
+            print(f"Error returning flocks: {e}")
+            return { 
+                "success" : False,
+                "message" : "Error occured returning flocks"
+            }, 400
+class SearchFlocks(Resource):
+    def get(self):
+        id = request.args.get("id", None)
+        query = request.args.get("q", None)
+
+        if not query or not id:
+            return {
+                "success": False,
+                "message": "Both 'id' and 'q' (query) are required"
+            }, 400
+
+        try:
+            results = list(
+                flocks.find(
+                    {
+                        "flockOwner": str(id),
+                        "flockName": {
+                            "$regex": query,
+                            "$options": "i"
+                        }
+                    },
+                    {"_id": 1, "flockName": 1}
+                ).limit(5)
+            )
+
+            for result in results:
+                result["_id"] = str(result["_id"])
+
+            return {
+                "success": True,
+                "message": "Flocks pulled successfully",
+                "flocks": results
+            }
+
+        except Exception as error:
+            print(f"Error fetching flocks: {error}")
+            return {
+                "success": False,
+                "message": "An error occurred while fetching flocks"
+            }, 500
 
 class FeedingSchedule(Resource):
     def put(self):
@@ -304,6 +385,7 @@ class FeedingSchedule(Resource):
 
 api.add_resource(Flocks, "/api/flocks")
 api.add_resource(Auth, "/api/auth")
+api.add_resource(SearchFlocks, "/api/flocks/s")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

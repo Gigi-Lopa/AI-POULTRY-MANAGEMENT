@@ -3,6 +3,7 @@ import React from 'react'
 import { Text, TextInput, TouchableOpacity, View } from 'react-native'
 
 const login = () => {
+  // change overcontent get flocks static ID 
   return (
     <View style = {[styles.screen, styles.container]}>
         <View style = {[styles.h60, styles.centerItems]}>

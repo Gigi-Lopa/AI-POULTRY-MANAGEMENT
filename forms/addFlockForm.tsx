@@ -1,38 +1,32 @@
+import Alert from "@/components/Alert";
 import DropdownComponent from "@/components/Dropdown";
 import styles from "@/styles/main";
 import type {
   FlockFormData,
   FlockFormDataValidation,
-  flockSelective,
+  FlockResponse
+} from "@/types/index";
+import {
+  flockBreeds,
+  flockPurposes
 } from "@/types/index";
 import { Bird, Plus } from "lucide-react-native";
 import React, { useState } from "react";
-import type {
-  NativeSyntheticEvent,
-  TextInputChangeEventData,
-} from "react-native";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
-const AddFlockForm = () => {
-  const flockBreeds: flockSelective[] = [
-    { label: "Broiler Chicken", value: "broiler" },
-    { label: "Layer Chicken", value: "layer" },
-    { label: "Free-Range Chicken", value: "free_range" },
-    { label: "Roadrunner (Huku)", value: "roadrunner" },
-    { label: "Quail", value: "quail" },
-    { label: "Guinea Fowl", value: "guinea_fowl" },
-    { label: "Turkey", value: "turkey" },
-    { label: "Duck", value: "duck" },
-  ];
-  const flockPurposes: flockSelective[] = [
-    { label: "Egg production (Layers)", value: "egg_production" },
-    { label: "Meat production (Broilers)", value: "meat_production" },
-    { label: "Breeding", value: "breeding" },
-    { label: "Mixed Purposes", value: "mixed_purposes" },
-  ];
+interface props{
+  closeModal: () => void;
+  setFlocks : React.Dispatch<React.SetStateAction<FlockResponse[]>>;
+}
+
+const AddFlockForm = ({closeModal, setFlocks} : props) => {
   const [breedType, setBreedType] = useState<string>();
   const [breadPurpose, setBreedPurpose] = useState<string>();
-  const [userID, setUserID] = useState("6887d714a07f7b6a5fecec73");
+  const [userID, setUserID] = useState("689301dbdcf6195cbe60e128");
+  const [status, setStatus] = useState({
+    error : false,
+    loading: false
+  })
 
   const updateBreedPurpse = (item: string): void => {
     setBreedPurpose(item);
@@ -57,13 +51,9 @@ const AddFlockForm = () => {
     }
   );
 
-  const handleChange = (
-    field: keyof FlockFormData,
-    value: NativeSyntheticEvent<TextInputChangeEventData>
-  ) => {
+  const handleChange = (field: keyof FlockFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
-
   const validate = () => {
     let isValid = true;
 
@@ -73,17 +63,18 @@ const AddFlockForm = () => {
         isValid = false;
         setValidationForm((prev) => ({
           ...prev,
-          key: true,
-        }));
+          [key]: true,
+        }))
       } else {
         setValidationForm((prev) => ({
           ...prev,
-          key: false,
+          [key]: false,
         }));
       }
     });
 
     if (isValid) {
+      setStatus((prev)=> ({...prev, loading : true}))
       fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/flocks`, {
         method: "POST",
         headers: {
@@ -102,12 +93,21 @@ const AddFlockForm = () => {
         .then((respoonse) => respoonse.json())
         .then((response) => {
           if (response?.success) {
+            setFlocks((prevFlocks) => [...prevFlocks, response.flock]);
+            closeModal();
           }
         })
         .catch((error) => {
-          console.log(error);
+          console.log("Error add flock:" + error);
+          setStatus(p => ({...p, error: true}))
         })
-        .finally(() => {}); // clean up
+        .finally(()=>
+          setTimeout(()=>{
+            setStatus({error: false, loading : false})
+
+          }, 3500)
+        )
+      
     }
   };
 
@@ -126,7 +126,7 @@ const AddFlockForm = () => {
             ]}
             placeholder="e.g Flock Layer C"
             value={formData.flockName}
-            onChange={(text) => handleChange("flockName", text)}
+            onChangeText={(text) => handleChange("flockName", text)}
           />
         </View>
         <View style={{ marginTop: 10 }}>
@@ -149,7 +149,7 @@ const AddFlockForm = () => {
                 validationForm.numberOfBirds ? styles.inputError : "",
               ]}
               value={formData.numberOfBirds}
-              onChange={(text) => handleChange("numberOfBirds", text)}
+              onChangeText={(text) => handleChange("numberOfBirds", text)}
             />
           </View>
           <View style={[{ width: "45%" }]}>
@@ -161,7 +161,7 @@ const AddFlockForm = () => {
               ]}
               placeholder="e.g 2 weeks"
               value={formData.age}
-              onChange={(text) => handleChange("age", text)}
+              onChangeText={(text) => handleChange("age", text)}
             />
           </View>
         </View>
@@ -173,7 +173,7 @@ const AddFlockForm = () => {
               validationForm.locationCoop ? styles.inputError : "",
             ]}
             value={formData.locationCoop}
-            onChange={(text) => handleChange("locationCoop", text)}
+            onChangeText={(text) => handleChange("locationCoop", text)}
             placeholder="e.g Coop 1"
           />
         </View>
@@ -186,6 +186,10 @@ const AddFlockForm = () => {
             Icon={Bird}
           />
         </View>
+        {
+          status.error &&
+          <Alert message="An error occured." variant="danger"/>
+        }
         <TouchableOpacity
           style={[
             { marginTop: 15 },

@@ -1,4 +1,5 @@
 import styles from "@/styles/main";
+import type { FlockResponse } from "@/types";
 import { Bell } from "lucide-react-native";
 import React from "react";
 import {
@@ -11,8 +12,9 @@ import ScheduleCard from "../ScheduleCard";
 
 interface FeedingScheduleProps {
   openModal: (event: GestureResponderEvent) => void;
+  setFlocks  : (value: FlockResponse[])=> void 
 }
-const FeedingScheduleContent = ({ openModal }: FeedingScheduleProps) => {
+const FeedingScheduleContent = ({ openModal, setFlocks }: FeedingScheduleProps) => {
   return (
     <View>
       <View style={[styles.w100, styles.justifyBetween, styles.flexRow]}>

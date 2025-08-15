@@ -21,18 +21,22 @@ export default function Index() {
     isAFlockMVisible,
     isScheduleMVisible,
     router,
+    flocks,
+    setFlocks,
     closeAddScheduleModal,
     setCurrentTab,
     openAddFlockModal,
+    deleteFlock,
     closeAddFlockModal,
     openAddScheduleModal,
+
   } = useHome();
 
   return (
     <View style={[styles.screen, styles.positionRelative]}>
       {isAFlockMVisible && (
         <Modal headerTitle="Add Flock" closeModal={closeAddFlockModal}>
-          <AddFlockForm />
+          <AddFlockForm closeModal = {closeAddFlockModal} setFlocks = {setFlocks}/>
         </Modal>
       )}
 
@@ -89,10 +93,10 @@ export default function Index() {
             />
             <View style={{ marginTop: 16 }}>
               {currentTab === "Overview" && (
-                <OverviewContent openModal={openAddFlockModal} />
+                <OverviewContent deleteFlock = {deleteFlock} flocks={flocks} setFlocks={setFlocks} openModal={openAddFlockModal} />
               )}
               {currentTab === "Feeding" && (
-                <FeedingScheduleContent openModal={openAddScheduleModal} />
+                <FeedingScheduleContent setFlocks = {setFlocks} openModal={openAddScheduleModal} />
               )}
               {currentTab === "Health" && <HealthRecordsContent />}
               {currentTab === "Reports" && <ReportsContent />}
