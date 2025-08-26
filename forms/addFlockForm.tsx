@@ -1,9 +1,8 @@
 import Alert from "@/components/Alert";
 import DropdownComponent from "@/components/Dropdown";
+import useAddFlock from "@/hooks/useAddFlock";
 import styles from "@/styles/main";
 import type {
-  FlockFormData,
-  FlockFormDataValidation,
   FlockResponse
 } from "@/types/index";
 import {
@@ -11,7 +10,7 @@ import {
   flockPurposes
 } from "@/types/index";
 import { Bird, Plus } from "lucide-react-native";
-import React, { useState } from "react";
+import React from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 interface props{
@@ -20,96 +19,17 @@ interface props{
 }
 
 const AddFlockForm = ({closeModal, setFlocks} : props) => {
-  const [breedType, setBreedType] = useState<string>();
-  const [breadPurpose, setBreedPurpose] = useState<string>();
-  const [userID, setUserID] = useState("689301dbdcf6195cbe60e128");
-  const [status, setStatus] = useState({
-    error : false,
-    loading: false
-  })
-
-  const updateBreedPurpse = (item: string): void => {
-    setBreedPurpose(item);
-  };
-  const updateBreedType = (item: string): void => {
-    setBreedType(item);
-  };
-
-  const [formData, setFormData] = useState<FlockFormData>({
-    flockName: "",
-    numberOfBirds: "",
-    age: "",
-    locationCoop: "",
-  });
-
-  const [validationForm, setValidationForm] = useState<FlockFormDataValidation>(
-    {
-      flockName: false,
-      numberOfBirds: false,
-      age: false,
-      locationCoop: false,
-    }
-  );
-
-  const handleChange = (field: keyof FlockFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-  const validate = () => {
-    let isValid = true;
-
-    Object.keys(formData).forEach((key) => {
-      const value = formData[key as keyof typeof formData];
-      if (!value || value.trim().length === 0) {
-        isValid = false;
-        setValidationForm((prev) => ({
-          ...prev,
-          [key]: true,
-        }))
-      } else {
-        setValidationForm((prev) => ({
-          ...prev,
-          [key]: false,
-        }));
-      }
-    });
-
-    if (isValid) {
-      setStatus((prev)=> ({...prev, loading : true}))
-      fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/flocks`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: userID, // remove after login is working
-          flockName: formData.flockName,
-          breedType: breedType,
-          numberOfBirds: formData.numberOfBirds,
-          age: formData.age,
-          locationCoop: formData.locationCoop,
-          flockPurpose: breadPurpose,
-        }),
-      })
-        .then((respoonse) => respoonse.json())
-        .then((response) => {
-          if (response?.success) {
-            setFlocks((prevFlocks) => [...prevFlocks, response.flock]);
-            closeModal();
-          }
-        })
-        .catch((error) => {
-          console.log("Error add flock:" + error);
-          setStatus(p => ({...p, error: true}))
-        })
-        .finally(()=>
-          setTimeout(()=>{
-            setStatus({error: false, loading : false})
-
-          }, 3500)
-        )
-      
-    }
-  };
+  const {
+    validationForm,
+    formData,
+    breedType,
+    breadPurpose,
+    status,
+    validate,
+    updateBreedPurpose,
+    updateBreedType,
+    handleChange,
+  } = useAddFlock({closeModal, setFlocks});
 
   return (
     <View>
@@ -182,13 +102,13 @@ const AddFlockForm = ({closeModal, setFlocks} : props) => {
           <DropdownComponent
             data={flockPurposes}
             value={breadPurpose ?? ""}
-            onChangeValue={updateBreedPurpse}
+            onChangeValue={updateBreedPurpose}
             Icon={Bird}
           />
         </View>
         {
           status.error &&
-          <Alert message="An error occured." variant="danger"/>
+          <Alert message="An error occurred." variant="danger"/>
         }
         <TouchableOpacity
           style={[
@@ -198,6 +118,7 @@ const AddFlockForm = ({closeModal, setFlocks} : props) => {
             styles.flexRow,
             styles.centerItems,
           ]}
+          disabled = {status.loading}
           onPress={validate}
         >
           <View>

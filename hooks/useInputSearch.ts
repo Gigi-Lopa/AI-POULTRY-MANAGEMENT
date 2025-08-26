@@ -4,12 +4,13 @@ import type {
   NativeSyntheticEvent,
   TextInputChangeEventData,
 } from "react-native";
+import useDebounce from "./useDebounce";
 
 export default function useInputSearch(link: string) {
   const [selectedValue, setSelectedValue] = useState<string>("");
   const [results, setResults] = useState<InputSearchResults>([]);
-
   const [query, setQuery] = useState("");
+  const debounceSearch = useDebounce(query, 300);
 
   const updateValue = (value: string) => setSelectedValue(value);
 
@@ -18,8 +19,7 @@ export default function useInputSearch(link: string) {
   };
 
   const onQuery = (event: NativeSyntheticEvent<TextInputChangeEventData>) => {
-    const text = event.nativeEvent.text;
-    setQuery(text);
+    setQuery(event.nativeEvent.text);
     queryResults();
     setResults([]);
   };

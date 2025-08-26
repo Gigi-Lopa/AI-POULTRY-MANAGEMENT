@@ -15,7 +15,7 @@ interface props {
 }
 
 const InputSearch = ({ label, placeholder }: props) => {
-  const { results, query, onQuery, updateValue } = useInputSearch("");
+  const { results, query, onQuery, updateValue } = useInputSearch("/api/flocks/s");
   return (
     <View style={styles.positionRelative}>
       <View>

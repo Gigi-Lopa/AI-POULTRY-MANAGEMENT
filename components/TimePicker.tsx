@@ -6,10 +6,11 @@ import { Text, TouchableOpacity, View } from "react-native";
 
 interface TimePickerProps {
   onTimeChange?: (time: Date) => void;
+  defaultTime : Date | null | undefined
 }
 
-export default function TimePicker({ onTimeChange }: TimePickerProps) {
-  const { time, show, onChange, openPickerDialog } = useTimePicker();
+export default function TimePicker({ onTimeChange, defaultTime }: TimePickerProps) {
+  const { time, show, onChange, openPickerDialog } = useTimePicker(defaultTime);
 
   const handleChange = (event: any, selectedTime?: Date) => {
     onChange(event, selectedTime);
@@ -27,12 +28,12 @@ export default function TimePicker({ onTimeChange }: TimePickerProps) {
         <Text style={[styles.p]}>Pick Time</Text>
       </TouchableOpacity>
       <Text style={[styles.p, styles.selfCenter, { marginLeft: 20 }]}>
-        Selected Time: {time.toLocaleTimeString()}
+        Selected Time: {time?.toLocaleTimeString() || "00:00"}
       </Text>
 
       {show && (
         <DateTimePicker
-          value={time}
+          value={time || new Date()}
           mode="time"
           is24Hour={true}
           display="default"

@@ -12,6 +12,7 @@ import os
 
 #TEST USER ID 689301dbdcf6195cbe60e128
 #ollama run  llama3.2:1b-instruct-q4_K_M 
+
 app = Flask(__name__)
 api = Api(app=app)
 cat_tz = pytz.timezone('Africa/Harare')
@@ -69,7 +70,7 @@ class Auth(Resource):
         if currentUser:
             return{
                 "alreadyExists" : True,
-                "mesaage" : "User will email already exists"
+                "message" : "User will email already exists"
             }
 
 
@@ -133,7 +134,7 @@ class Flocks(Resource):
             }, 400
 
         
-        required_fields = ["id", "flockName", "breedType", "numberOfBirds", "age", "locationCoop", "flockPurpose"]
+        required_fields = ["flockOwner", "flockName", "breedType", "numberOfBirds", "age", "locationCoop", "flockPurpose"]
         missing_fields = [field for field in required_fields if not data.get(field)]
 
         if missing_fields:
@@ -165,9 +166,7 @@ class Flocks(Resource):
         }
         try:
             insert_result = flocks.insert_one(flockData)
-            flockData["flockID"] = str(insert_result.inserted_id)
-
-            flockData["_id"] = str(flockData["_id"]) 
+            flockData["_id"] = str(insert_result.inserted_id)
             flockData.pop("flockOwner")
 
             return {
@@ -288,7 +287,7 @@ class Flocks(Resource):
             print(f"Error returning flocks: {e}")
             return { 
                 "success" : False,
-                "message" : "Error occured returning flocks"
+                "message" : "Error occurred returning flocks"
             }, 400
 class SearchFlocks(Resource):
     def get(self):
@@ -349,7 +348,7 @@ class FeedingSchedule(Resource):
             "user_id": ObjectId(data["user_id"]),
             "flockName": flock.get("flockName"),
             "feed" : data.get("feed"),
-            "amount" : data.get("ampunt"),
+            "amount" : data.get("amount"),
             "time": data["time"],
             "repeat": data.get("repeat", []),
             "notify": data.get("notify", False),

@@ -1,6 +1,7 @@
 import { useState } from "react";
-export default function useTimePicker() {
-  const [time, setTime] = useState(new Date());
+
+export default function useTimePicker(defaultTime: Date | null | undefined) {
+  const [time, setTime] = useState(defaultTime);
   const [show, setShow] = useState(false);
 
   const openPickerDialog = () => setShow(true);
