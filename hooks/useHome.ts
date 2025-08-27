@@ -1,4 +1,4 @@
-import type { FlockResponse } from "@/types";
+import type { FlockResponse, Schedule } from "@/types";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 export default function useHome() {
@@ -6,8 +6,8 @@ export default function useHome() {
   const [isAFlockMVisible, setIsAFlockMVisible] = useState(false);
   const [isScheduleMVisible, setIsScheduleMVisible] = useState(false);
   const [currentTab, setCurrentTab] = useState<string>("Feeding");
-    const [flocks, setFlocks] = useState<FlockResponse[]>([]);
-  
+  const [flocks, setFlocks] = useState<FlockResponse[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
 
   const openAddFlockModal = () => setIsAFlockMVisible(true);
   const closeAddFlockModal = () => setIsAFlockMVisible(false);
@@ -25,13 +25,19 @@ export default function useHome() {
     })
   }
 
-  
+  const addScheduleSuccessCallBack = (schedule :any)=>{
+    closeAddScheduleModal()
+    setSchedules((p)=>[...p, schedule])
+  }
   return {
     currentTab,
     isAFlockMVisible,
     isScheduleMVisible,
     router,
     flocks,
+    schedules,
+    addScheduleSuccessCallBack,
+    setSchedules,
     deleteFlock,
     setFlocks,
     closeAddScheduleModal,

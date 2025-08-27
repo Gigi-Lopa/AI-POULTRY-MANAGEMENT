@@ -11,8 +11,8 @@ export type FlockFormDataValidation = {
 };
 
 export type InputSearchResult = {
-  id: string;
-  value: string;
+  _id: string;
+  label: string;
 };
 export type NotifyDay = {
   monday?: boolean;
@@ -23,7 +23,17 @@ export type NotifyDay = {
   saturday?: boolean;
   sunday?: boolean;
 };
-export type InputSearchResults = InputSearchResult[];
+
+export interface Schedule {
+  schedule_id: string;
+  flockID: string;
+  flockName: string;
+  feed: string;
+  amount: number | string;   
+  time: string;              
+  repeat: string[];  
+  notify: boolean;
+}
 
 export type ScheduleFormData = {
   user_id: string;

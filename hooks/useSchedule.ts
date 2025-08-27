@@ -1,8 +1,9 @@
+import { USER_ID } from "@/constants";
 import { NotifyDay, ScheduleFormData } from "@/types";
 import { useEffect, useState } from "react";
 import { NativeSyntheticEvent, TextInputChangeEventData } from "react-native";
 
-export default function useSchedule(){
+export default function useSchedule(onUpdate : (value:any)=>void){
     const [isNotify, setIsNotify] = useState(false);
     const [status, setStatus] = useState({
       loading : false,
@@ -30,7 +31,7 @@ export default function useSchedule(){
     });
 
     const [scheduleForm, setScheduleForm] = useState<ScheduleFormData>({
-      flock_id: "ghn",
+      flock_id: "",
       user_id: "",
       feed: "",
       amount: "",
@@ -117,7 +118,32 @@ export default function useSchedule(){
       console.log("Submitting final data:", finalData);
       clearValidationErrors()
       setStatus((p)=> ({...p, loading : true}))
-      // Add your form submission logic here
+      
+      fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/feeding`, {
+        method : "PUT",
+        headers : {
+          "Content-Type" : "application/json"
+        },
+        body :JSON.stringify({
+          "scheduleOwner": USER_ID,
+          "flockID": scheduleForm.flock_id,
+          "feed" : scheduleForm.feed,
+          "amount" : scheduleForm.amount,
+          "time": scheduleForm.time,
+          "repeat": scheduleForm.repeat,
+          "notify": scheduleForm.notify,
+        })
+      })
+      .then(response => response.json())
+      .then(response => {
+        if(response.success){
+          onUpdate(response.schedule);
+        }
+      })
+      .catch(error =>{
+        console.log(error)
+      })
+
     };
 
   

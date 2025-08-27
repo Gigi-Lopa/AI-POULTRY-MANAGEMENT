@@ -1,21 +1,26 @@
 import useInputSearch from "@/hooks/useInputSearch";
 import styles from "@/styles/main";
+import { InputSearchResult, ScheduleFormData } from "@/types";
 import React from "react";
 import {
+  NativeSyntheticEvent,
   Platform,
   Text,
   TextInput,
-  TouchableOpacity,
-  View,
+  TextInputChangeEventData,
+  View
 } from "react-native";
+import SearchResults from "./SearchResult";
 
 interface props {
   label: string;
   placeholder?: string;
+  handleChange: ( field: keyof ScheduleFormData, value: NativeSyntheticEvent<TextInputChangeEventData> | boolean | Date | string) => void;
 }
 
-const InputSearch = ({ label, placeholder }: props) => {
-  const { results, query, onQuery, updateValue } = useInputSearch("/api/flocks/s");
+const InputSearch = ({ label, placeholder , handleChange}: props) => {
+  const { results, query, onQuery, onUpdate, show, setShow} = useInputSearch("/api/flocks/s", handleChange);
+  
   return (
     <View style={styles.positionRelative}>
       <View>
@@ -23,24 +28,26 @@ const InputSearch = ({ label, placeholder }: props) => {
         <TextInput
           value={query}
           onChange={onQuery}
+          onBlur={()=> setShow(false)}
           style={[styles.defaultInput]}
           placeholder={placeholder ? placeholder : ""}
         />
       </View>
-      {results.length !== 0 && (
+      {show && (
         <View
-          style={[
-            /** RENDER SEARCHRESULT.tsx INSTEAD **/
-            styles.inputSearchResults,
-            Platform.OS === "android" ? styles.androidShadow : styles.iosShadow,
-          ]}
-        >
-          <TouchableOpacity
-            onPress={() => updateValue("ed")}
-            style={[styles.inputSearchResult, styles.borderBottom]}
-          >
-            <Text style={[styles.p]}>Flock One</Text>
-          </TouchableOpacity>
+              style={[
+                styles.inputSearchResults,
+                Platform.OS === "android" ? styles.androidShadow : styles.iosShadow,
+              ]}
+            >
+        {
+          results.map((flock:InputSearchResult)=> (
+            <SearchResults
+              key={flock._id}
+              flock={flock}
+              onUpdate={onUpdate}/>
+          ))
+        }
         </View>
       )}
     </View>

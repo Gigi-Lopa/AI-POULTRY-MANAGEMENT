@@ -1,27 +1,20 @@
 import styles from "@/styles/main";
+import { InputSearchResult } from "@/types";
 import React from "react";
-import { Platform, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity } from "react-native";
 
 interface props {
-  id: string;
-  name: string;
-  onUpdate: (value: string) => void;
+  flock: InputSearchResult
+  onUpdate: (flock:  InputSearchResult) => void;
 }
-const SearchResults = ({ id, name, onUpdate }: props) => {
+const SearchResults = ({flock ,onUpdate }: props) => {
   return (
-    <View
-      style={[
-        styles.inputSearchResults,
-        Platform.OS === "android" ? styles.androidShadow : styles.iosShadow,
-      ]}
-    >
       <TouchableOpacity
-        onPress={() => onUpdate(id)}
+        onPress={() => onUpdate(flock)}
         style={[styles.inputSearchResult, styles.borderBottom]}
       >
-        <Text style={[styles.p]}>{name}</Text>
+        <Text style={[styles.p]}>{flock.label}</Text>
       </TouchableOpacity>
-    </View>
   );
 };
 

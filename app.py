@@ -316,7 +316,9 @@ class SearchFlocks(Resource):
 
             for result in results:
                 result["_id"] = str(result["_id"])
-
+                result["label"] = str(result["flockName"])
+                result.pop("flockName", None)
+            
             return {
                 "success": True,
                 "message": "Flocks pulled successfully",
@@ -324,7 +326,7 @@ class SearchFlocks(Resource):
             }
 
         except Exception as error:
-            print(f"Error fetching flocks: {error}")
+            app.logger.error(f"Error fetching flocks: {error}")
             return {
                 "success": False,
                 "message": "An error occurred while fetching flocks"
@@ -336,7 +338,7 @@ class FeedingSchedule(Resource):
         if not data:
             return {"success": False, "message": "Missing data"}, 400
 
-        flock =  flocks.find_one({"_id" : ObjectId(data.get("flock_id"))})
+        flock =  flocks.find_one({"_id" : ObjectId(data.get("flockID"))})
 
         if not flock:
             return {
@@ -345,7 +347,8 @@ class FeedingSchedule(Resource):
             }
         
         schedule = {
-            "user_id": ObjectId(data["user_id"]),
+            "scheduleOwner": ObjectId(data["scheduleOwner"]),
+            "flockID": data.get("flockID"),
             "flockName": flock.get("flockName"),
             "feed" : data.get("feed"),
             "amount" : data.get("amount"),
@@ -354,9 +357,27 @@ class FeedingSchedule(Resource):
             "notify": data.get("notify", False),
             "created_at": datetime.now()
         }
-        res = feeding_schedules.insert_one(schedule)
-        return {"success": True, "schedule_id": str(res.inserted_id)}, 201
-    
+        try:
+            res = feeding_schedules.insert_one(schedule)
+            return {
+                "success": True, 
+                "schedule" : {
+                    "schedule_id": str(res.inserted_id),
+                    "flockID": data.get("flockID"),
+                    "flockName": flock.get("flockName"),
+                    "feed" : data.get("feed"),
+                    "amount" : data.get("amount"),
+                    "time": data["time"],
+                    "repeat": data.get("repeat", []),
+                    "notify": data.get("notify", False),
+                }}, 201
+        
+        except Exception as e :
+            app.logger.error(f"Error inserting schedule : {e}")
+            return {
+                "message"  :"An error occured"
+            }, 401
+        
     def get(self):
         user_id = request.args.get("id")
         schedules = list(feeding_schedules.find({"user_id": ObjectId(user_id)}))
@@ -384,6 +405,7 @@ class FeedingSchedule(Resource):
 
 api.add_resource(Flocks, "/api/flocks")
 api.add_resource(Auth, "/api/auth")
+api.add_resource(FeedingSchedule, "/api/feeding")
 api.add_resource(SearchFlocks, "/api/flocks/s")
 
 if __name__ == "__main__":

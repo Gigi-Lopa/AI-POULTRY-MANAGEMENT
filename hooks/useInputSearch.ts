@@ -1,4 +1,5 @@
-import { InputSearchResults } from "@/types";
+import { USER_ID } from "@/constants";
+import { InputSearchResult, ScheduleFormData } from "@/types";
 import { useState } from "react";
 import type {
   NativeSyntheticEvent,
@@ -6,29 +7,40 @@ import type {
 } from "react-native";
 import useDebounce from "./useDebounce";
 
-export default function useInputSearch(link: string) {
-  const [selectedValue, setSelectedValue] = useState<string>("");
-  const [results, setResults] = useState<InputSearchResults>([]);
+export default function useInputSearch(link: string, handleChange: ( field: keyof ScheduleFormData, value: NativeSyntheticEvent<TextInputChangeEventData> | boolean | Date | string) => void){
+  const [results, setResults] = useState<InputSearchResult[]>([]);
   const [query, setQuery] = useState("");
+  const [show, setShow] = useState(false)
   const debounceSearch = useDebounce(query, 300);
 
-  const updateValue = (value: string) => setSelectedValue(value);
-
   const queryResults = () => {
-    console.log("Querying for:", link);
-  };
+    fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}${link}?id=${USER_ID}&&q=${debounceSearch}`)
+    .then(response => response.json())
+    .then(response => {
+      if (response.success){
+        setShow(true)
+        console.log(response.flocks)
+        setResults(response.flocks)
+      }
+    })
+    .catch(error => console.log(error))
+   };
 
+  const onUpdate = (flock:InputSearchResult) =>{
+    handleChange("flock_id", flock._id);
+    setQuery(flock.label);
+  }
   const onQuery = (event: NativeSyntheticEvent<TextInputChangeEventData>) => {
     setQuery(event.nativeEvent.text);
     queryResults();
-    setResults([]);
   };
 
   return {
     results,
     query,
-    selectedValue,
+    show, 
+    setShow,
     onQuery,
-    updateValue,
+    onUpdate
   };
 }

@@ -15,7 +15,10 @@ import {
   View
 } from "react-native";
 
-const AddScheduleForm = () => {
+interface props{
+  onUpdate : (value: any) => void
+}
+const AddScheduleForm = ({onUpdate}:props) => {
     const {
       scheduleForm,
       notifyDays,
@@ -26,11 +29,12 @@ const AddScheduleForm = () => {
       validate,
       handleChange,
       setNotifyDays
-    } = useSchedule();
+    } = useSchedule(onUpdate);
 
     return (
       <View style={{ padding: 16 }}>
         <InputSearch
+          handleChange={handleChange}
           label="Search Flock"
           placeholder="e.g. Flock One"
           />

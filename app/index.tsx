@@ -20,8 +20,10 @@ export default function Index() {
     currentTab,
     isAFlockMVisible,
     isScheduleMVisible,
-    router,
+    schedules,
     flocks,
+    setSchedules,
+    addScheduleSuccessCallBack,
     setFlocks,
     closeAddScheduleModal,
     setCurrentTab,
@@ -42,7 +44,7 @@ export default function Index() {
 
       {isScheduleMVisible && (
         <Modal closeModal={closeAddScheduleModal} headerTitle="Add a schedule">
-          <AddScheduleForm />
+          <AddScheduleForm onUpdate = {addScheduleSuccessCallBack}/>
         </Modal>
       )}
 
@@ -96,7 +98,7 @@ export default function Index() {
                 <OverviewContent deleteFlock = {deleteFlock} flocks={flocks} setFlocks={setFlocks} openModal={openAddFlockModal} />
               )}
               {currentTab === "Feeding" && (
-                <FeedingScheduleContent setFlocks = {setFlocks} openModal={openAddScheduleModal} />
+                <FeedingScheduleContent openModal={openAddScheduleModal} />
               )}
               {currentTab === "Health" && <HealthRecordsContent />}
               {currentTab === "Reports" && <ReportsContent />}
