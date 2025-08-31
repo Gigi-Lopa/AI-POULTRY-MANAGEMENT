@@ -8,7 +8,7 @@ import Modal from "@/components/Modal";
 import TopTabs from "@/components/TopTabs";
 import AddFlockForm from "@/forms/addFlockForm";
 import AddScheduleForm from "@/forms/addScheduleForm";
-import AddVaccinationForm from "@/forms/AddVaccinationForm";
+import AddVaccinationForm from "@/forms/addVaccinationForm";
 import useHome from "@/hooks/useHome";
 import styles from "@/styles/main";
 import { registerForPushNotificationsAsync } from "@/utils/utils";
