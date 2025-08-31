@@ -313,6 +313,7 @@ class SearchFlocks(Resource):
                     {"_id": 1, "flockName": 1}
                 ).limit(5)
             )
+            pprint(results)
 
             for result in results:
                 result["_id"] = str(result["_id"])
@@ -323,7 +324,7 @@ class SearchFlocks(Resource):
                 "success": True,
                 "message": "Flocks pulled successfully",
                 "flocks": results
-            }
+            }, 200
 
         except Exception as error:
             app.logger.error(f"Error fetching flocks: {error}")
@@ -331,7 +332,6 @@ class SearchFlocks(Resource):
                 "success": False,
                 "message": "An error occurred while fetching flocks"
             }, 500
-
 class FeedingSchedule(Resource):
     def put(self):
         data = request.get_json()
@@ -347,7 +347,7 @@ class FeedingSchedule(Resource):
             }
         
         schedule = {
-            "scheduleOwner": ObjectId(data["scheduleOwner"]),
+            "scheduleOwner": data["scheduleOwner"],
             "flockID": data.get("flockID"),
             "flockName": flock.get("flockName"),
             "feed" : data.get("feed"),
@@ -362,7 +362,7 @@ class FeedingSchedule(Resource):
             return {
                 "success": True, 
                 "schedule" : {
-                    "schedule_id": str(res.inserted_id),
+                    "_id": str(res.inserted_id),
                     "flockID": data.get("flockID"),
                     "flockName": flock.get("flockName"),
                     "feed" : data.get("feed"),
@@ -375,15 +375,21 @@ class FeedingSchedule(Resource):
         except Exception as e :
             app.logger.error(f"Error inserting schedule : {e}")
             return {
-                "message"  :"An error occured"
+                "message"  :"An error occurred"
             }, 401
         
     def get(self):
         user_id = request.args.get("id")
-        schedules = list(feeding_schedules.find({"user_id": ObjectId(user_id)}))
+        schedules = list(feeding_schedules.find({"scheduleOwner": str(user_id)}))
         for s in schedules:
             s["_id"] = str(s["_id"])
-        return {"success": True, "schedules": schedules}, 200
+            s["scheduleOwner"] = str(s["scheduleOwner"])
+            s.pop("created_at", None)
+        
+        return {
+            "success": True, 
+            "schedules": schedules
+        }, 200
     
     def patch(self):
         data = request.get_json()
@@ -402,6 +408,34 @@ class FeedingSchedule(Resource):
 
         return {"success": True, "message": "Notification updated"}, 200
 
+    def delete(self):
+        id = request.args.get("id", None)
+
+        if not id:
+            return{
+                "message" : "Id not found"
+            }, 400
+        
+        try:
+            schedule = feeding_schedules.find_one({"_id": ObjectId(id)})
+            if not schedule:
+                return {
+                    "success": False,
+                    "message": "Schedule not found."
+                }, 404
+
+            feeding_schedules.delete_one({"_id": ObjectId(id)})
+            return {
+                "success": True,
+                "message": "Schedule deleted successfully."
+            }, 200
+        
+        except Exception as e:
+            app.logger.error(f"An error occurred deleting schedule: {e}")
+            return {
+                "success" : False,
+                "message" : "An error occurred deleting schedule"
+            }, 500
 
 api.add_resource(Flocks, "/api/flocks")
 api.add_resource(Auth, "/api/auth")

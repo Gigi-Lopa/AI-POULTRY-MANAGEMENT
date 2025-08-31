@@ -1,6 +1,6 @@
 import { USER_ID } from "@/constants";
 import { InputSearchResult, ScheduleFormData } from "@/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   NativeSyntheticEvent,
   TextInputChangeEventData,
@@ -14,7 +14,7 @@ export default function useInputSearch(link: string, handleChange: ( field: keyo
   const debounceSearch = useDebounce(query, 300);
 
   const queryResults = () => {
-    fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}${link}?id=${USER_ID}&&q=${debounceSearch}`)
+    fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}${link}?id=${USER_ID}&&q=${debounceSearch.trim()}`)
     .then(response => response.json())
     .then(response => {
       if (response.success){
@@ -25,14 +25,20 @@ export default function useInputSearch(link: string, handleChange: ( field: keyo
     })
     .catch(error => console.log(error))
    };
+  
+  useEffect (()=> {
+    if (debounceSearch.trim().length){
+      queryResults();
+    }
+  }, [debounceSearch]) 
 
   const onUpdate = (flock:InputSearchResult) =>{
     handleChange("flock_id", flock._id);
     setQuery(flock.label);
+    setShow(false)
   }
   const onQuery = (event: NativeSyntheticEvent<TextInputChangeEventData>) => {
     setQuery(event.nativeEvent.text);
-    queryResults();
   };
 
   return {

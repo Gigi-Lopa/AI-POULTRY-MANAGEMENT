@@ -236,9 +236,7 @@ const styles = StyleSheet.create({
   mTop: {
     marginTop: 25,
   },
-  tabsContainer: {
-    justifyContent: "space-evenly",
-  },
+
   activeTab: {
     paddingBottom: 10,
     borderBottomWidth: 3,

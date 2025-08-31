@@ -12,7 +12,6 @@ interface prop{
 }
 
 const FlockCard = ({flock, deleteFlock}:prop) => {
-    console.log(flock)
   return (
     <View style = {[styles.poultryCard, styles.rounded, styles.bg_white]}>
         <View style = {[styles.flexRow, styles.justifyBetween]}>

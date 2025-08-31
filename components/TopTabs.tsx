@@ -1,6 +1,6 @@
 import styles from '@/styles/main';
 import React, { useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity } from 'react-native';
 
 interface TopTabsProps {
   tabs: string[];
@@ -11,7 +11,7 @@ const TopTabs: React.FC<TopTabsProps> = ({ tabs, onTabChange }) => {
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
   return (
-    <View style = {[styles.flexRow,styles.tabsContainer]}>
+    <ScrollView showsHorizontalScrollIndicator={false} horizontal style = {[styles.flexRow,]}>
       {tabs.map((tab) => (
         <TouchableOpacity
           key={tab}
@@ -20,6 +20,9 @@ const TopTabs: React.FC<TopTabsProps> = ({ tabs, onTabChange }) => {
             onTabChange(tab);
           }}
           style={[
+            {
+              marginRight : 15
+            },
             activeTab === tab && styles.activeTab,
           ]}
         >
@@ -33,7 +36,7 @@ const TopTabs: React.FC<TopTabsProps> = ({ tabs, onTabChange }) => {
           </Text>
         </TouchableOpacity>
       ))}
-    </View>
+    </ScrollView>
   );
 };
 

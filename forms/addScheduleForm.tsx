@@ -108,7 +108,15 @@ const AddScheduleForm = ({onUpdate}:props) => {
           validateForm.isFlockSelected &&
           <Alert variant="danger" message="Flock not Selected"/>
         }
-        
+        {
+          status.error &&
+           <Alert variant="danger" message="Internal Server error"/>
+        }
+        {
+          status.success && 
+          <Alert variant={"success"} message="Schedule created successfully" />
+        }
+
         <TouchableOpacity
           disabled = {status.loading}
           style={[

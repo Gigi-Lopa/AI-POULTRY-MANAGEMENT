@@ -1,11 +1,28 @@
+import useSchedule from '@/hooks/useSchedule';
 import styles from '@/styles/main';
-import { CheckCircle, Clock } from 'lucide-react-native';
+import { Schedule } from '@/types';
+import { extractDays, extractTime } from '@/utils/utils';
+import { Clock, Trash } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Switch, Text, View } from 'react-native';
+import { Switch, Text, TouchableOpacity, View } from 'react-native';
 
-const ScheduleCard = () => {
-   const [isEnabled, setIsEnabled] = useState(false);
-  const toggleSwitch = () => setIsEnabled(previousState => !previousState);
+interface props{
+    schedule: Schedule,
+    deleteSchedule : (id: string) => void
+}
+
+const ScheduleCard = ({schedule, deleteSchedule} : props) => {
+    const [isEnabled, setIsEnabled] = useState(schedule.notify);
+    const {updateNotification} = useSchedule();
+    const toggleSwitch = () => {
+    setIsEnabled(prev => {
+        const state  = !prev;
+        setTimeout(() => {
+            updateNotification(schedule._id, state);
+        }, 1500);
+        return state;
+    });
+};
 
   return (
     <View style = {[styles.w100, styles.poultryCard, styles.rounded, styles.bg_white]}>
@@ -16,31 +33,33 @@ const ScheduleCard = () => {
                         <Clock size={15} color={ styles.bg_purple.backgroundColor}/>
                     </View>
                     <View style= {{marginRight : 15}}>
-                        <Text style = {[styles.h4, {marginTop :5}]}>06:00</Text>
+                        <Text style = {[styles.h4, {marginTop :5}]}>{extractTime(schedule.time)}</Text>
                     </View>
                     <View style={[styles.flexRow, styles.selfCenter]}>
                         <View style = {[styles.pill, styles.bg_success]}>
-                            <Text style = {[ styles.pillText, styles.selfCenter]}>Healthy</Text>
+                            <Text style = {[ styles.pillText, styles.selfCenter]}>{extractDays(schedule.repeat)}</Text>
                         </View>
                     </View>
                 </View>
             </View>
             <View style = {[styles.w40, , styles.flexRow, styles.justifyEnd]}>
-                <CheckCircle size = {15} color = {styles.text_success.color}/>
+                <TouchableOpacity onPress={()=>deleteSchedule(schedule._id)}>
+                    <Trash size = {15} color = {styles.text_danger.color}/>
+                </TouchableOpacity>
             </View>
         </View>
         <View style = {styles.borderBottom}>
             <View style = {styles.flexRow}>
                 <Text style = {[styles.h6, styles.fontBold]}>Flock: </Text>
-                <Text style = {[styles.h6, {marginLeft: 5}]}>Flock One </Text>
+                <Text style = {[styles.h6, {marginLeft: 5}]}>{schedule.flockName} </Text>
             </View>
                <View style = {styles.flexRow}>
                 <Text style = {[styles.h6, styles.fontBold]}>Feed: </Text>
-                <Text style = {[styles.h6, {marginLeft: 5}]}>Pallets </Text>
+                <Text style = {[styles.h6, {marginLeft: 5}]}>{schedule.feed} </Text>
             </View>
                <View style = {styles.flexRow}>
                 <Text style = {[styles.h6, styles.fontBold]}>Amount: </Text>
-                <Text style = {[styles.h6, {marginLeft: 5}]}>I5 Kgs </Text>
+                <Text style = {[styles.h6, {marginLeft: 5}]}>{schedule.amount} Kgs </Text>
             </View>
         </View>
         <View style={styles.flexRow}>

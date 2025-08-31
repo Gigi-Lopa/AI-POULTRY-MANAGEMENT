@@ -1,19 +1,23 @@
 import FeedingScheduleContent from "@/components/ContentFiles/FeedingScheduleContent";
-import HealthRecordsContent from "@/components/ContentFiles/HealthRecordsContent";
 import OverviewContent from "@/components/ContentFiles/OverviewContent";
-import ReportsContent from "@/components/ContentFiles/ReportsContent";
+import SymptomAnalysisContent from "@/components/ContentFiles/SymptomAnalysisContent";
+import VaccinationContent from "@/components/ContentFiles/VaccinationContent";
 import DashboardCard from "@/components/DashboardCard";
 import Header from "@/components/Header";
 import Modal from "@/components/Modal";
 import TopTabs from "@/components/TopTabs";
 import AddFlockForm from "@/forms/addFlockForm";
 import AddScheduleForm from "@/forms/addScheduleForm";
+import AddVaccinationForm from "@/forms/AddVaccinationForm";
 import useHome from "@/hooks/useHome";
 import styles from "@/styles/main";
+import { registerForPushNotificationsAsync } from "@/utils/utils";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import { Bird, HeartPulse, TrendingUp } from "lucide-react-native";
+import { useEffect } from "react";
 import { ScrollView, Text, View } from "react-native";
+
 
 export default function Index() {
   const {
@@ -22,6 +26,9 @@ export default function Index() {
     isScheduleMVisible,
     schedules,
     flocks,
+    vaccinations,
+    isVaccinationVisible,
+    setVaccinations,
     setSchedules,
     addScheduleSuccessCallBack,
     setFlocks,
@@ -31,8 +38,11 @@ export default function Index() {
     deleteFlock,
     closeAddFlockModal,
     openAddScheduleModal,
-
+    openAddVaccinationModal,
+    closeAddVaccinationModal
   } = useHome();
+
+  useEffect(()=>{registerForPushNotificationsAsync()}, [])
 
   return (
     <View style={[styles.screen, styles.positionRelative]}>
@@ -47,6 +57,13 @@ export default function Index() {
           <AddScheduleForm onUpdate = {addScheduleSuccessCallBack}/>
         </Modal>
       )}
+
+      {
+        isVaccinationVisible  &&
+        <Modal closeModal={closeAddVaccinationModal} headerTitle="Add a vaccination">
+          <AddVaccinationForm closeModal={closeAddVaccinationModal} setVaccinations={setVaccinations}/>
+        </Modal>
+      }
 
       <StatusBar style="dark" />
       <Header />
@@ -87,21 +104,18 @@ export default function Index() {
               </View>
             </LinearGradient>
           </View>
-
           <View style={styles.mTop}>
             <TopTabs
-              tabs={["Overview", "Feeding", "Health", "Reports"]}
+              tabs={["Overview", "Feeding", "Vaccinations", "Symptom Analysis"]}
               onTabChange={(tab) => setCurrentTab(tab)}
             />
             <View style={{ marginTop: 16 }}>
-              {currentTab === "Overview" && (
-                <OverviewContent deleteFlock = {deleteFlock} flocks={flocks} setFlocks={setFlocks} openModal={openAddFlockModal} />
-              )}
+              {currentTab === "Overview" && (<OverviewContent deleteFlock = {deleteFlock} flocks={flocks} setFlocks={setFlocks} openModal={openAddFlockModal} /> )}
               {currentTab === "Feeding" && (
-                <FeedingScheduleContent openModal={openAddScheduleModal} />
+                <FeedingScheduleContent openModal={openAddScheduleModal} schedules = {schedules} setSchedules = {setSchedules}/>
               )}
-              {currentTab === "Health" && <HealthRecordsContent />}
-              {currentTab === "Reports" && <ReportsContent />}
+              {currentTab === "Vaccinations" && <VaccinationContent openModal = { openAddVaccinationModal} vaccinations = {vaccinations} setVaccinations = {setVaccinations}/>}
+              {currentTab === "Symptom Analysis" && <SymptomAnalysisContent />}
             </View>
           </View>
         </View>

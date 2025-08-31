@@ -94,9 +94,7 @@ export default function useAddFlock({closeModal, setFlocks}: props){
             setTimeout(()=>{
                 setStatus({error: false, loading : false})
             }, 3500)
-        )
-        
-        }
+        )}
     };
 
     return {
