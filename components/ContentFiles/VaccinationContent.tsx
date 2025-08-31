@@ -1,15 +1,28 @@
+import useAddVaccination from "@/hooks/useAddVaccination";
 import styles from "@/styles/main";
 import { VaccinationRecord } from "@/types";
 import { Plus } from "lucide-react-native";
+import { useEffect } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import Spinner from "../Spinner";
 import VaccinationCard from "../VaccinationCard";
 
 interface props {
     openModal : () => void,
+    closeModal : () => void,
     setVaccinations: React.Dispatch<React.SetStateAction<VaccinationRecord[]>>;
     vaccinations : VaccinationRecord[]
 };
 function VaccinationContent({openModal, setVaccinations, vaccinations}: props) {
+    const {
+        status,
+        getVaccinations
+    } = useAddVaccination({ closeModal: () => {}, setVaccinations })
+
+  useEffect(()=>{
+    getVaccinations()
+  }, [])
+
   return (
     <View>
         <ScrollView>
@@ -26,8 +39,21 @@ function VaccinationContent({openModal, setVaccinations, vaccinations}: props) {
                     </Text>
                 </TouchableOpacity>
             </View>
-            <View>
-                <VaccinationCard />
+            <View style= {styles.mTop}>
+                { status.loading && (
+                    <View style={[styles.h30, styles.w100, styles.flexColumn, styles.centerItems]}>
+                        <Spinner size="medium" />
+                        <Text style={[styles.p]}>Loading...</Text>
+                    </View>
+                        )
+                }
+                {
+                    vaccinations.length !== 0 &&
+                    vaccinations.map((v: VaccinationRecord, index: number)=> (
+                        <VaccinationCard vaccination = {v} key={index}/>
+
+                    ))
+                }
             </View>
         </ScrollView>
     </View>

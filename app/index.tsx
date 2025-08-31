@@ -114,7 +114,7 @@ export default function Index() {
               {currentTab === "Feeding" && (
                 <FeedingScheduleContent openModal={openAddScheduleModal} schedules = {schedules} setSchedules = {setSchedules}/>
               )}
-              {currentTab === "Vaccinations" && <VaccinationContent openModal = { openAddVaccinationModal} vaccinations = {vaccinations} setVaccinations = {setVaccinations}/>}
+              {currentTab === "Vaccinations" && <VaccinationContent openModal = { openAddVaccinationModal} closeModal={closeAddVaccinationModal} vaccinations = {vaccinations} setVaccinations = {setVaccinations}/>}
               {currentTab === "Symptom Analysis" && <SymptomAnalysisContent />}
             </View>
           </View>

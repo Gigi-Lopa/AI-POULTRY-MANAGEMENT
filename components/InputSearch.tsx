@@ -1,6 +1,6 @@
 import useInputSearch from "@/hooks/useInputSearch";
 import styles from "@/styles/main";
-import { InputSearchResult, ScheduleFormData } from "@/types";
+import { InputSearchResult } from "@/types";
 import React from "react";
 import {
   NativeSyntheticEvent,
@@ -15,7 +15,7 @@ import SearchResults from "./SearchResult";
 interface props {
   label: string;
   placeholder?: string;
-  handleChange: ( field: keyof ScheduleFormData, value: NativeSyntheticEvent<TextInputChangeEventData> | boolean | Date | string) => void;
+  handleChange: ( field: any, value: NativeSyntheticEvent<TextInputChangeEventData> | boolean | Date | string) => void;
 }
 
 const InputSearch = ({ label, placeholder , handleChange}: props) => {

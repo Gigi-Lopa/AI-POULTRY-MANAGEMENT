@@ -1,14 +1,16 @@
+import { USER_ID } from "@/constants";
 import type { VaccinationFormData, VaccinationRecord } from "@/types/index";
 import { useState } from "react";
+import { Alert, NativeSyntheticEvent, TextInputChangeEventData } from "react-native";
 
 interface Props {
-  closeModal: () => void;
-  setVaccinations: React.Dispatch<React.SetStateAction<VaccinationRecord[]>>;
+  closeModal?: () => void;
+  setVaccinations?: React.Dispatch<React.SetStateAction<VaccinationRecord[]>>;
 }
 
 export default function useAddVaccination({ closeModal, setVaccinations}: Props) {
   const [formData, setFormData] = useState<VaccinationFormData>({
-    flockID: "",
+    flock_id: "",
     flockName: "",
     vaccineName: "",
     vaccineType: "",
@@ -20,7 +22,7 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
   const [validationForm, setValidationForm] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState({ loading: false, error: false });
 
-  const handleChange = (field: keyof FormData, value: string) => {
+  const handleChange = (field: any, value: NativeSyntheticEvent<TextInputChangeEventData> | boolean | Date | string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setValidationForm(prev => ({ ...prev, [field]: false }));
   };
@@ -39,7 +41,7 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
   const validate = () => {
     const errors: Record<string, boolean> = {};
 
-    if (!formData.flockID) errors.flockID = true;
+    if (!formData.flock_id) errors.flock_id = true;
     if (!formData.vaccineName) errors.vaccineName = true;
     if (!formData.vaccineType) errors.vaccineType = true;
     if (!formData.manufacturer) errors.manufacturer = true;
@@ -52,22 +54,63 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
     }
 
     setStatus({ loading: true, error: false });
-
-    const flockName = formData.flockID; 
-    const newRecord: VaccinationRecord = {
-      ...formData,
-      flockName
-    };
-
-    setVaccinations(prev => [...prev, newRecord]);
-    setStatus({ loading: false, error: false });
-    closeModal();
+    submitVaccination(formData)
   };
+
+  function getVaccinations (){
+        setStatus({ loading: true, error: false });
+        fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/vaccinations?id=${USER_ID}`)
+        .then(response => response.json())
+        .then(response => {
+          if (response.success){
+            if(setVaccinations) setVaccinations(response.vaccinations)
+          }
+        })
+        .catch(error => console.log(error)) 
+        .finally(()=> setStatus({ loading: false, error: false }))
+  }
+
+  function submitVaccination(finalData: VaccinationFormData){
+    fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/vaccinations`, {
+      method : "PUT",
+      headers : {
+        "Content-Type" : "application/json"
+      }, 
+      body : JSON.stringify({
+        "flockID" : finalData.flock_id,
+        "vaccinationOwner": USER_ID,
+        "vaccineName" : finalData.vaccineName,
+        "vaccineType" : finalData.vaccineType,
+        "manufacturer"  : finalData.manufacturer,
+        "dosage" : finalData.dosage,
+        "route" : finalData.route,
+      })
+    })
+    .then(response => response.json())
+    .then(response => {
+      if(response.success){
+        const flockName = response.vaccination.flockName; 
+        const newRecord: VaccinationRecord = {
+          ...formData,
+          flockName
+        };
+
+        if(setVaccinations) setVaccinations(prev => [...prev, newRecord]);
+        if (closeModal) closeModal();
+      }
+    })
+    .catch(error =>{
+      console.log(error)
+      Alert.prompt("Error", "An error occurred writing vaccination")
+    })
+    .finally(()=> setStatus({ loading: false, error: false }))
+  }
 
   return {
     formData,
     validationForm,
     status,
+    getVaccinations,
     handleChange,
     updateVaccineType,
     updateRoute,

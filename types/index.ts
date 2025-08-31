@@ -46,7 +46,7 @@ export const displayValues = {
 }
 
 export interface VaccinationFormData {
-  flockID: string;
+  flock_id: string;
   flockName: string;
   vaccineName: string;
   vaccineType: string;
@@ -56,7 +56,7 @@ export interface VaccinationFormData {
 }
 export interface VaccinationRecord {
   _id? : string,
-  flockID: string;
+  flock_id: string;
   flockName: string;
   vaccineName: string;
   vaccineType: string;

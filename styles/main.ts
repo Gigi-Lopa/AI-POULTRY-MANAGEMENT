@@ -140,6 +140,9 @@ const styles = StyleSheet.create({
   flexRow: {
     flexDirection: "row",
   },
+  flexWrap: {
+    flexWrap : "wrap"
+  },
   flexColumn: {
     flexDirection: "column",
   },

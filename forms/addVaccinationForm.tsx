@@ -1,5 +1,6 @@
 import Alert from "@/components/Alert";
 import DropdownComponent from "@/components/Dropdown";
+import InputSearch from "@/components/InputSearch";
 import useAddVaccination from "@/hooks/useAddVaccination";
 import styles from "@/styles/main";
 import type { VaccinationRecord } from "@/types/index";
@@ -30,7 +31,11 @@ const AddVaccinationForm = ({ closeModal, setVaccinations }: props) => {
         Enter the details for the new vaccination.
       </Text>
       <View style={{ marginTop: 10 }}>
-
+        <InputSearch
+          handleChange={handleChange}
+          label="Search Flock"
+          placeholder="e.g. Flock One"
+        />
         <View style={{ marginTop: 10 }}>
           <Text style={[styles.h6]}>Vaccine Name</Text>
           <TextInput

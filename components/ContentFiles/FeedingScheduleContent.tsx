@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Alert from "../Alert";
 import ScheduleCard from "../ScheduleCard";
 import Spinner from "../Spinner";
 
@@ -65,6 +66,7 @@ const FeedingScheduleContent = ({ openModal, schedules, setSchedules }: FeedingS
             </View>
           )
         }
+       {schedules.length === 0  && !feedStatus.loading && <Alert message="No schedules created." variant={"ghost"} />}
 
       </View>
     </View>

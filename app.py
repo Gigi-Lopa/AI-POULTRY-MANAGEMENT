@@ -23,6 +23,7 @@ database = client.ai_poulty
 users = database.users
 flocks = database.flocks
 feeding_schedules = database.feeding_schedules
+vaccination_collection = database.vaccination_collection
 CORS(app)
 
 class Auth(Resource):
@@ -437,10 +438,100 @@ class FeedingSchedule(Resource):
                 "message" : "An error occurred deleting schedule"
             }, 500
 
+
+class Vaccinations(Resource):
+    def get(self):
+        vaccinationOwner = request.args.get("id", None)
+
+        if not ObjectId.is_valid(vaccinationOwner):
+                return {"message": "Invalid vaccination owner ID"}, 400
+        try:
+            vaccinations = list(
+                vaccination_collection.find({"vaccinationOwner": ObjectId(vaccinationOwner)})
+            )
+
+            if not vaccinations:
+                return {"message": "No vaccination records found"}, 404
+
+            for v in vaccinations:
+                v["_id"] = str(v["_id"])
+                v["vaccinationOwner"] = str(v["vaccinationOwner"])
+
+            return {
+                "success": True,
+                "count": len(vaccinations),
+                "vaccinations": vaccinations
+            }, 200
+
+        except Exception as e:
+            app.logger.exception("Error fetching vaccination records")
+            return {"message": "Error occurred while fetching vaccination records"}, 500
+    
+    def put(self):
+        data = request.get_json()
+
+        if not data :
+            return{
+                "message" : "Empty body"
+            }, 400
+        
+        flock = flocks.find_one({"_id", ObjectId( data.get("flockID"))})
+        vaccination_doc = {
+            "flock_id" : data.get("flockID", None),
+            "vaccinationOwner": data.get("userID", ""),
+            "vaccineName" : data.get("vaccineName"),
+            "vaccineType" : data.get("vaccineType"),
+            "manufacturer"  : data.get("manufacturer"),
+            "dosage" : data.get("dosage"),
+            "route" : data.get("route"),
+            "created_at"  : datetime.now(cat_tz)
+        }
+        try:
+            vaccination = vaccination_collection.insert_one(vaccination_doc)
+            
+            if vaccination.inserted_id:
+                vaccination_doc["_id"] = str(vaccination.inserted_id)
+                vaccination_doc["flockName"] = flock.get("flockName", "N/A")
+                
+                return{
+                    "success" : True,
+                    "message" : "Vaccination successfully registered",
+                    "vaccination"  : vaccination_doc
+                }, 200
+            
+        except Exception as e:
+            app.logger.error(f"An error occurred inserting vaccination {e}")
+            return {
+                "message" :"Error occurred inserting vaccination record"
+            }, 500
+
+    def delete(self):
+        vaccination_id = request.args.get("id", None)
+        if not ObjectId.is_valid(vaccination_id):
+            return {
+                "message": "Vaccination Id required"
+            }, 400
+        try:
+            result = vaccination_collection.delete_one({"_id": ObjectId(vaccination_id)})
+
+            if result.deleted_count == 0:
+                return {"message": "Vaccination record not found"}, 404
+
+            return {
+                "success": True,
+                "message": "Vaccination successfully deleted",
+                "deleted_id": vaccination_id
+            }, 200
+
+        except Exception as e:
+            app.logger.exception("Error deleting vaccination record")
+            return {"message": "Error occurred while deleting vaccination record"}, 500
+
 api.add_resource(Flocks, "/api/flocks")
 api.add_resource(Auth, "/api/auth")
 api.add_resource(FeedingSchedule, "/api/feeding")
 api.add_resource(SearchFlocks, "/api/flocks/s")
+api.add_resource(Vaccinations, "/api/vaccinations")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
