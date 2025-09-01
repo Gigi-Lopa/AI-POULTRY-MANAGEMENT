@@ -52,7 +52,7 @@ export interface VaccinationFormData {
   vaccineType: string;
   manufacturer: string;
   dosage: string;
-  route: string;
+  route: string  ;
 }
 export interface VaccinationRecord {
   _id? : string,

@@ -28,13 +28,13 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
   };
 
 
-  const updateVaccineType = (vaccineType: string) => {
-    setFormData(prev => ({ ...prev, vaccineType }));
+  const updateVaccineType = (vaccineType: any) => {
+    setFormData(prev => ({ ...prev, vaccineType : vaccineType.value }));
     setValidationForm(prev => ({ ...prev, vaccineType: false }));
   };
 
-  const updateRoute = (route: string) => {
-    setFormData(prev => ({ ...prev, route }));
+  const updateRoute = (route: any) => {
+    setFormData(prev => ({ ...prev, route: route.value }));
     setValidationForm(prev => ({ ...prev, route: false }));
   };
 
@@ -56,7 +56,25 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
     setStatus({ loading: true, error: false });
     submitVaccination(formData)
   };
+  function deleteVaccination(id: string) {
+    fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/vaccinations?id=${id}`, {
+      method : "DELETE"
+    })
+    .then(response => response.json())
+    .then((response)=>{
+      if(response.success){
+      
+        if (setVaccinations) {
+          setVaccinations(prev => prev.filter(v => v._id !== id));
+        }
+      }
+    })
+    .catch(error =>{
+     Alert.alert("An error occurred deleting vaccine") 
+    })
 
+    
+  }
   function getVaccinations (){
         setStatus({ loading: true, error: false });
         fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/vaccinations?id=${USER_ID}`)
@@ -90,9 +108,11 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
     .then(response => {
       if(response.success){
         const flockName = response.vaccination.flockName; 
+        const _id = response.vaccination._id
         const newRecord: VaccinationRecord = {
           ...formData,
-          flockName
+          flockName,  
+          _id,
         };
 
         if(setVaccinations) setVaccinations(prev => [...prev, newRecord]);
@@ -101,7 +121,7 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
     })
     .catch(error =>{
       console.log(error)
-      Alert.prompt("Error", "An error occurred writing vaccination")
+      setStatus((p)=> ({ ...p, error: true }));
     })
     .finally(()=> setStatus({ loading: false, error: false }))
   }
@@ -110,6 +130,7 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
     formData,
     validationForm,
     status,
+    deleteVaccination,
     getVaccinations,
     handleChange,
     updateVaccineType,

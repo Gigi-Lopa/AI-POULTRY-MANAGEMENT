@@ -66,7 +66,11 @@ const FeedingScheduleContent = ({ openModal, schedules, setSchedules }: FeedingS
             </View>
           )
         }
-       {schedules.length === 0  && !feedStatus.loading && <Alert message="No schedules created." variant={"ghost"} />}
+       {schedules.length === 0  && !feedStatus.loading && 
+        <View style={[styles.h30, styles.w100, styles.flexColumn, styles.centerItems]}>
+          <Alert message="No schedules created." variant={"ghost"} />
+        </View>
+       }
 
       </View>
     </View>

@@ -4,6 +4,7 @@ import { VaccinationRecord } from "@/types";
 import { Plus } from "lucide-react-native";
 import { useEffect } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import Alert from "../Alert";
 import Spinner from "../Spinner";
 import VaccinationCard from "../VaccinationCard";
 
@@ -16,7 +17,8 @@ interface props {
 function VaccinationContent({openModal, setVaccinations, vaccinations}: props) {
     const {
         status,
-        getVaccinations
+        getVaccinations,
+        deleteVaccination
     } = useAddVaccination({ closeModal: () => {}, setVaccinations })
 
   useEffect(()=>{
@@ -40,17 +42,28 @@ function VaccinationContent({openModal, setVaccinations, vaccinations}: props) {
                 </TouchableOpacity>
             </View>
             <View style= {styles.mTop}>
-                { status.loading && (
+                { 
+                    vaccinations.length === 0 &&
+                    status.loading && (
                     <View style={[styles.h30, styles.w100, styles.flexColumn, styles.centerItems]}>
                         <Spinner size="medium" />
                         <Text style={[styles.p]}>Loading...</Text>
                     </View>
-                        )
+                )
+                }
+                {
+                !status.loading &&
+                vaccinations.length === 0 
+                && (
+                    <View style={[styles.h30, styles.w100, styles.flexColumn, styles.centerItems]}>
+                       <Alert message="No vaccinations recorded" variant="ghost"/>
+                    </View>
+                )
                 }
                 {
                     vaccinations.length !== 0 &&
                     vaccinations.map((v: VaccinationRecord, index: number)=> (
-                        <VaccinationCard vaccination = {v} key={index}/>
+                        <VaccinationCard onDelete = {deleteVaccination} vaccination = {v} key={index}/>
 
                     ))
                 }

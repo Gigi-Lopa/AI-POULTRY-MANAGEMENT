@@ -9,6 +9,7 @@ from bson.errors import InvalidId
 from pprint import pprint
 import pytz
 import os
+import ollama
 
 #TEST USER ID 689301dbdcf6195cbe60e128
 #ollama run  llama3.2:1b-instruct-q4_K_M 
@@ -25,6 +26,25 @@ flocks = database.flocks
 feeding_schedules = database.feeding_schedules
 vaccination_collection = database.vaccination_collection
 CORS(app)
+
+MODEL_NAME = "llama3.2:1b-instruct-q4_K_M"
+
+def generate(prompt):
+    for chunk in ollama.generate(
+        model=MODEL_NAME,
+        prompt=prompt,
+        stream=True
+    ):
+        yield chunk.get("response", "")
+
+def generate_full(prompt):
+    output = ""
+    for chunk in ollama.generate(model=MODEL_NAME, prompt=prompt, stream=True):
+        output += chunk.get("response", "")
+    return output
+
+def getDashboardAISuggestions():
+    pass
 
 class Auth(Resource):
     #LOGIN FORM
@@ -163,7 +183,8 @@ class Flocks(Resource):
             "numberOfBirds": data["numberOfBirds"],
             "age": data["age"],
             "locationCoop": data["locationCoop"],
-            "flockPurpose": data["flockPurpose"]
+            "flockPurpose": data["flockPurpose"],
+            "created_at" : datetime.now(cat_tz)
         }
         try:
             insert_result = flocks.insert_one(flockData)
@@ -438,7 +459,6 @@ class FeedingSchedule(Resource):
                 "message" : "An error occurred deleting schedule"
             }, 500
 
-
 class Vaccinations(Resource):
     def get(self):
         vaccinationOwner = request.args.get("id", None)
@@ -447,15 +467,15 @@ class Vaccinations(Resource):
                 return {"message": "Invalid vaccination owner ID"}, 400
         try:
             vaccinations = list(
-                vaccination_collection.find({"vaccinationOwner": ObjectId(vaccinationOwner)})
+                vaccination_collection.find({"vaccinationOwner": vaccinationOwner})
             )
 
-            if not vaccinations:
-                return {"message": "No vaccination records found"}, 404
-
             for v in vaccinations:
+                flock = flocks.find_one({"_id" : ObjectId(v.get("flock_id"))})
                 v["_id"] = str(v["_id"])
                 v["vaccinationOwner"] = str(v["vaccinationOwner"])
+                v["flockName"] = flock.get("flockName")
+                v.pop("created_at", None)
 
             return {
                 "success": True,
@@ -475,10 +495,10 @@ class Vaccinations(Resource):
                 "message" : "Empty body"
             }, 400
         
-        flock = flocks.find_one({"_id", ObjectId( data.get("flockID"))})
+        flock = flocks.find_one({"_id" : ObjectId( data.get("flockID"))})
         vaccination_doc = {
             "flock_id" : data.get("flockID", None),
-            "vaccinationOwner": data.get("userID", ""),
+            "vaccinationOwner": data.get("vaccinationOwner",),
             "vaccineName" : data.get("vaccineName"),
             "vaccineType" : data.get("vaccineType"),
             "manufacturer"  : data.get("manufacturer"),
@@ -492,7 +512,8 @@ class Vaccinations(Resource):
             if vaccination.inserted_id:
                 vaccination_doc["_id"] = str(vaccination.inserted_id)
                 vaccination_doc["flockName"] = flock.get("flockName", "N/A")
-                
+                vaccination_doc.pop("created_at", None)
+
                 return{
                     "success" : True,
                     "message" : "Vaccination successfully registered",
@@ -513,7 +534,6 @@ class Vaccinations(Resource):
             }, 400
         try:
             result = vaccination_collection.delete_one({"_id": ObjectId(vaccination_id)})
-
             if result.deleted_count == 0:
                 return {"message": "Vaccination record not found"}, 404
 

@@ -5,9 +5,10 @@ import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 
 interface props{
-    vaccination : VaccinationRecord
+    vaccination : VaccinationRecord;
+    onDelete:(id: string) => void
 }
-export default function VaccinationCard({vaccination}: props) {
+export default function VaccinationCard({vaccination, onDelete}: props) {
   
   return (
     <View style = {[styles.w100, styles.poultryCard, styles.rounded, styles.bg_white , {marginBottom : 10}]}>
@@ -18,12 +19,12 @@ export default function VaccinationCard({vaccination}: props) {
                         <HeartPlus size={15} color={ styles.bg_purple.backgroundColor}/>
                     </View>
                     <View style= {{marginRight : 15}}>
-                        <Text style = {[styles.h4, {marginTop :5}]}>Flock Layer C</Text>
+                        <Text style = {[styles.h4, {marginTop :5}]}>{vaccination.flockName}</Text>
                     </View>
                 </View>
             </View>
-            <View style = {[styles.w40, , styles.flexRow, styles.justifyEnd]}>
-                <TouchableOpacity onPress={()=> console.log("")}>
+            <View style = {[styles.w40, , styles.flexRow, styles.justifyEnd, styles.selfCenter]}>
+                <TouchableOpacity onPress={()=> onDelete(vaccination._id ?? "")}>
                     <Trash size = {15} color = {styles.text_danger.color}/>
                 </TouchableOpacity>
             </View>
@@ -32,14 +33,14 @@ export default function VaccinationCard({vaccination}: props) {
             <View style={[styles.flexRow,styles.flexWrap]}>
                 <Text style={[styles.h6, styles.fontBold]}>Vaccine Name: </Text>
                 <Text style={[styles.h6, { flexShrink: 1, marginLeft: 5 }]}>
-                Newcastle Disease Vaccine (Lasota)
+                    {vaccination.vaccineName}
                 </Text>
             </View>
 
             <View style={[styles.flexRow,styles.flexWrap]}>
                 <Text style={[styles.h6, styles.fontBold]}>Vaccine Type: </Text>
                 <Text style={[styles.h6, { flexShrink: 1, marginLeft: 5 }]}>
-                Live attenuated
+                    {vaccination.vaccineType}
                 </Text>
             </View>
 
@@ -53,14 +54,14 @@ export default function VaccinationCard({vaccination}: props) {
             <View style={[styles.flexRow,styles.flexWrap]}>
                 <Text style={[styles.h6, styles.fontBold]}>Dosage: </Text>
                 <Text style={[styles.h6, { flexShrink: 1, marginLeft: 5 }]}>
-                0.03 (ml per bird)
+                {vaccination.dosage}
                 </Text>
             </View>
 
             <View style={[styles.flexRow,styles.flexWrap]}>
                 <Text style={[styles.h6, styles.fontBold]}>Route: </Text>
                 <Text style={[styles.h6, { flexShrink: 1, marginLeft: 5 }]}>
-                Eye drop
+                {vaccination.route}
                 </Text>
             </View>
         </View>
