@@ -196,7 +196,11 @@ export default function useSchedule(
     .then(response => response.json())
     .then(response => {
       if(response.success){
-        setTimeout(()=>{if (onUpdate) onUpdate(response.schedule);}, 1500)
+        if(response.schedule.notify){
+          scheduleFeedingReminder(response.schedule)
+        }
+        
+        setTimeout(()=>{if (onUpdate) onUpdate(response.schedule);}, 100)
         setStatus((p)=> ({...p , success: true}))
         return;
       }

@@ -5,7 +5,7 @@ import { Text, View } from 'react-native'
 
 interface DashboardCardProps{
   name : string,
-  value : string,
+  value : string | number,
   Icon :LucideIcon,
 }
 const DashboardCard = ({Icon, name, value}:DashboardCardProps) => {

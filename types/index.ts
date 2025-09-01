@@ -123,3 +123,15 @@ export type FlockResponse = FlockFormData & {
   breedType: string,
   flockPurpose: string
 }
+export interface AIRecommendation {
+  priority: "high" | "medium" | "low";
+  title: string;
+  description: string;
+  impact: string;
+  action: string;
+}
+
+export interface AIChat {
+  prompt : string,
+  response : string,
+}

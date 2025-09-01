@@ -113,6 +113,8 @@ const AddFlockForm = ({closeModal, setFlocks} : props) => {
         <TouchableOpacity
           style={[
             { marginTop: 15 },
+            status.loading ?
+            styles.bg_success_30 :
             styles.bg_success,
             styles.buttonSM,
             styles.flexRow,

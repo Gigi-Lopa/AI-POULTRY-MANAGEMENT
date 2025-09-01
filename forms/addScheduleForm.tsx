@@ -120,6 +120,8 @@ const AddScheduleForm = ({onUpdate}:props) => {
         <TouchableOpacity
           disabled = {status.loading}
           style={[
+            status.loading ?
+            styles.bg_success_30 :
             styles.bg_success,
             styles.buttonSM,
             styles.flexRow,

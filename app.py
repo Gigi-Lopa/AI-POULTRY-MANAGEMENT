@@ -9,8 +9,10 @@ from bson.errors import InvalidId
 from pprint import pprint
 import pytz
 import os
+import json
+import re
 import ollama
-
+from prompts import getDashboardDataPrompt, getSymptomSuggestions
 #TEST USER ID 689301dbdcf6195cbe60e128
 #ollama run  llama3.2:1b-instruct-q4_K_M 
 
@@ -29,6 +31,11 @@ CORS(app)
 
 MODEL_NAME = "llama3.2:1b-instruct-q4_K_M"
 
+def fix_to_json(response_str: str):
+    objects = re.findall(r"\{.*?\}", response_str, re.DOTALL)
+    json_str = "[" + ",".join(objects) + "]"
+    return json.loads(json_str)
+
 def generate(prompt):
     for chunk in ollama.generate(
         model=MODEL_NAME,
@@ -43,9 +50,101 @@ def generate_full(prompt):
         output += chunk.get("response", "")
     return output
 
-def getDashboardAISuggestions():
-    pass
+def cleanResponse(response):
+    clean_text = response.replace("\n", " ").replace("\t", "").replace("*", "")
+    return clean_text 
 
+def getDashboardAISuggestions(FLOCKS, SCHEDULES, VACCINATIONS):
+    prompt = getDashboardDataPrompt(FLOCKS, SCHEDULES, VACCINATIONS)
+    output =  generate_full(prompt)
+    json_response = fix_to_json(output)
+    return json_response
+
+class Dashboard(Resource):
+    def get(self):
+        flockOwner = request.args.get("id", None)
+        if not flockOwner:
+            return {
+                "success": False,
+                "message": "User id required",
+            }, 400  
+        try:
+            flocksCount = flocks.count_documents({"flockOwner": str(flockOwner)})
+            birdsCounts = 0
+
+            flocks_data = list(flocks.find({"flockOwner": str(flockOwner)}))
+
+            for flock in flocks_data:
+                birdsCounts += int(flock.get("numberOfBirds", 0))
+
+            return {
+                "success" : True,
+                "counts": {
+                    "flocksCount": flocksCount,
+                    "birdCounts": birdsCounts
+                    }
+                }, 200
+        except Exception as e:
+            app.logger.error(f"Error fetching dashboard data {e}")
+
+class AI(Resource):
+    def get(self):
+        flockOwner = request.args.get("id", None)
+        pprint("**** GETTING SUGGESTIONS ****")
+        if not flockOwner:
+            return {
+                "success": False,
+                "message": "User id required",
+            }, 400
+
+        try:
+            flocks_data = list(
+                flocks.find(
+                    {"flockOwner": str(flockOwner)},
+                    {"_id": 0}
+                ).sort("created_at", -1).limit(3)
+            )
+            schedules = list(feeding_schedules.find({"scheduleOwner": flockOwner}, {"_id": 0}).sort("created_at", -1).limit(3))
+            vaccinations = list(vaccination_collection.find({"scheduleOwner": flockOwner}, {"_id": 0}).sort("created_at", -1).limit(3))
+
+            AI_RECOMMENDATIONS = getDashboardAISuggestions(flocks_data, schedules, vaccinations) if len(flocks_data) != 0 else []
+
+            return {
+                "success": True,
+                "message": "Dashboard data retrieved successfully",
+                "AI_RECOMMENDATIONS": AI_RECOMMENDATIONS
+            }, 200
+
+        except Exception as e:
+            app.logger.error(f"An error occurred getting dashboard Information: {e}")
+            return {
+                "success": False,
+                "message": "An error occurred getting data"
+            }, 500
+
+    def post(self):
+        data = request.get_json()
+        user_id = data.get("user_id", None)
+        prompt  =  data.get("prompt", None)
+        pprint("**** GETTING HEALTH  SOMETHING ****")
+
+        if not user_id and not prompt:
+            return {
+                "message" : "User ID and prompt required"
+            } , 400
+        try:
+            PROMPT = getSymptomSuggestions(prompt)
+            output = generate_full(prompt=PROMPT)
+            #cleanedResponse = cleanResponse(output)
+
+            return {
+                "success" : True,
+                "response":  output
+            }
+
+        except Exception as e:
+            app.logger.error(f"Error returning symptom analysis")
+        
 class Auth(Resource):
     #LOGIN FORM
     def post(self): 
@@ -177,7 +276,7 @@ class Flocks(Resource):
             }, 400
 
         flockData = {
-            "flockOwner" : str(data.get("id")),
+            "flockOwner" : str(data.get("flockOwner")),
             "flockName": data["flockName"],
             "breedType": data["breedType"],
             "numberOfBirds": data["numberOfBirds"],
@@ -189,7 +288,10 @@ class Flocks(Resource):
         try:
             insert_result = flocks.insert_one(flockData)
             flockData["_id"] = str(insert_result.inserted_id)
+            flockData["breedType"] = str(flockData["breedType"]["label"])
+            flockData["flockPurpose"] = str(flockData["flockPurpose"]["label"])
             flockData.pop("flockOwner")
+            flockData.pop("created_at")
 
             return {
                 "success": True,
@@ -270,6 +372,9 @@ class Flocks(Resource):
                 }, 404
 
             flocks.delete_one({"_id": ObjectId(flock_id)})
+            feeding_schedules.delete_one({"flockID" : flock_id})
+            vaccination_collection.delete_one({"flock_id" : flock_id})
+
             return {
                 "success": True,
                 "message": "Flock deleted successfully."
@@ -296,9 +401,10 @@ class Flocks(Resource):
                 flock["_id"] = str(flock["_id"])
                 flock["age"] = str(flock["age"])
                 flock["numberOfBirds"] = str(flock["numberOfBirds"])
-                flock["breedType"]= flock["breedType"]["value"]
-                flock["flockPurpose"] = flock["flockPurpose"]["value"]
-                
+                flock["breedType"]= flock["breedType"]["label"]
+                flock["flockPurpose"] = flock["flockPurpose"]["label"]
+                flock.pop("created_at", None)
+
             return {
                 "success" : True,
                 "message" : "Flocks pulled successfully",
@@ -474,7 +580,7 @@ class Vaccinations(Resource):
                 flock = flocks.find_one({"_id" : ObjectId(v.get("flock_id"))})
                 v["_id"] = str(v["_id"])
                 v["vaccinationOwner"] = str(v["vaccinationOwner"])
-                v["flockName"] = flock.get("flockName")
+                v["flockName"] = flock.get("flockName") if flock else "Unknown"
                 v.pop("created_at", None)
 
             return {
@@ -547,6 +653,8 @@ class Vaccinations(Resource):
             app.logger.exception("Error deleting vaccination record")
             return {"message": "Error occurred while deleting vaccination record"}, 500
 
+api.add_resource(AI, "/api/ai")
+api.add_resource(Dashboard, "/api/dashboard")
 api.add_resource(Flocks, "/api/flocks")
 api.add_resource(Auth, "/api/auth")
 api.add_resource(FeedingSchedule, "/api/feeding")
@@ -555,3 +663,4 @@ api.add_resource(Vaccinations, "/api/vaccinations")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
+    

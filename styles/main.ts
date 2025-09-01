@@ -5,7 +5,7 @@ const { width, height } = Dimensions.get("screen");
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#effbf6",
+    backgroundColor: "#fdfdfdff",
     width: width,
     height: height,
     position: "relative",
@@ -87,6 +87,9 @@ const styles = StyleSheet.create({
   fontBold: {
     fontFamily: "Poppins-Bold",
   },
+  fontSemiBold :{
+    fontFamily: "Poppins-SemiBold",
+  },
   button: {
     paddingVertical: 12,
     paddingHorizontal: 20,
@@ -94,6 +97,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   buttonSM: {
+
     paddingVertical: 6,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -125,8 +129,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   buttonTextOutline: {
-    color: "#2563eb",
-    fontFamily: "Poppins-Regular",
+    fontFamily: "Poppins-SemiBold",
     textAlign: "center",
     fontSize: 12,
   },
@@ -321,6 +324,14 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     flexDirection: "row",
   },
+  prompt : {
+    padding : 10,
+    borderWidth : 1,
+    borderColor : "#d1d5dc",
+    borderRadius : 7.5
+  }
 });
+
+
 
 export default styles;

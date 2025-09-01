@@ -1,8 +1,5 @@
 import styles from '@/styles/main'
 import { FlockResponse } from '@/types'
-import {
-    displayValues
-} from "@/types/index"
 import { Bird, Calendar, LocateIcon, Trash } from 'lucide-react-native'
 import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
@@ -17,8 +14,8 @@ const FlockCard = ({flock, deleteFlock}:prop) => {
         <View style = {[styles.flexRow, styles.justifyBetween]}>
             <View>
                 <Text style = {[styles.h4, styles.fontBold]}>{flock.flockName}</Text>
-                <Text style = {[styles.p]}>{displayValues[flock.breedType as keyof typeof displayValues]}</Text>
-                <Text style = {[styles.p]}>{displayValues[flock.flockPurpose as keyof typeof displayValues]}</Text>
+                <Text style = {[styles.p]}>{flock.breedType}</Text>
+                <Text style = {[styles.p]}>{flock.flockPurpose}</Text>
 
             </View>
             <TouchableOpacity onPress={()=>deleteFlock(flock._id)}>
