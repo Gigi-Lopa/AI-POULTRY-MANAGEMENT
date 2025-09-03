@@ -36,10 +36,12 @@ const Signup = () => {
       });
 
       const data = await res.json();
-
+      
       if (data.success) {
         resetForm();
-        saveToCache("token", data.user_id);
+
+        const token = {userID : data.user_id}
+        saveToCache("token", token);
         router.navigate("/home/home");
       } else {
         setErrorMessage(data.message || "Registration failed");

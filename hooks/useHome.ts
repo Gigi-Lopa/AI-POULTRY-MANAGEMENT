@@ -20,7 +20,10 @@ export default function useHome() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [vaccinations, setVaccinations] = useState<VaccinationRecord[]>([])
   const [AI_RECOMMENDATIONS, setAI_RECOMMENDATIONS] = useState<AIRecommendation[]>([])
-
+  const [status, setStatus] = useState({
+    loading : false,
+    error : false
+  })
   const openAddFlockModal = () => setIsAFlockMVisible(true);
   const closeAddFlockModal = () => setIsAFlockMVisible(false);
 
@@ -68,6 +71,24 @@ export default function useHome() {
     .catch(error => console.error(error))
     .finally(()=> setDashboardAIStatus((p)=>({...p, loading: false})))
   }
+  const getFlocks = async () => {
+    setStatus((p)=> ({...p, loading: true}));
+    try {
+        const res = await fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/flocks?id=${USER_ID}`);
+        const data = await res.json();
+
+    if (data?.success) {
+        setFlocks(data.flocks);
+    } else {
+      setStatus((p)=> ({...p, error: true}));
+    }
+    } catch (err) {
+      console.error(err);
+      setStatus((p)=> ({...p, error: true}));
+    } finally {
+      setStatus((p)=> ({loading : false, error: false}));
+    }
+  }
 
   useEffect(()=>{
     const getToken = async () => {
@@ -79,12 +100,12 @@ export default function useHome() {
 
   useEffect(()=>{
     if (!USER_ID) return;
-
     getDashboardData()
     setTimeout(()=>{getAIRecommendations()},2500)
-  }, [USER_ID,flocks, schedules, vaccinations])
+  }, [USER_ID,flocks])
 
-  
+  useEffect(()=>{getFlocks()}, [USER_ID])
+
   const addScheduleSuccessCallBack = (schedule :any)=>{
     closeAddScheduleModal()
     setSchedules((p)=>[...p, schedule])
@@ -101,6 +122,7 @@ export default function useHome() {
     dashboardCounts,
     dashboardAIStatus,
     AI_RECOMMENDATIONS,
+    status,
     addScheduleSuccessCallBack,
     setSchedules,
     deleteFlock,

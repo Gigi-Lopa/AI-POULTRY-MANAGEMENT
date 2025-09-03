@@ -32,7 +32,7 @@ const AddScheduleForm = ({onUpdate}:props) => {
     } = useSchedule(onUpdate);
 
     return (
-      <View style={{ padding: 16 }}>
+      <View style={{ padding: 0 }}>
         <InputSearch
           handleChange={handleChange}
           label="Search Flock"

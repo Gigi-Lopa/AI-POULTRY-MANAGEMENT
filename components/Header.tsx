@@ -1,9 +1,22 @@
+import { clearAllCache } from "@/cache";
 import styles from "@/styles/main";
-import { Bird, Settings } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { Bird, LogOut } from "lucide-react-native";
 import React from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
 
 const Header = () => {
+  const router = useRouter();
+
+  const handleLogOut = async () => {
+    try {
+      await clearAllCache();
+      router.replace("/");   
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
+
   return (
     <View style={[]}>
       <View
@@ -21,8 +34,8 @@ const Header = () => {
             Poultry Management
           </Text>
         </View>
-        <TouchableOpacity>
-          <Settings />
+        <TouchableOpacity onPress={handleLogOut} >
+          <LogOut/>
         </TouchableOpacity>
       </View>
     </View>

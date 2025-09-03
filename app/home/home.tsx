@@ -31,6 +31,7 @@ export default function Index() {
     isVaccinationVisible,
     dashboardCounts,
     dashboardAIStatus,
+    status,
     AI_RECOMMENDATIONS,
     setVaccinations,
     setSchedules,
@@ -125,7 +126,7 @@ export default function Index() {
                 <OverviewContent 
                   deleteFlock = {deleteFlock}
                   flocks={flocks}
-                  setFlocks={setFlocks} 
+                  status={status}
                   AI_RECOMMENDATIONS={AI_RECOMMENDATIONS}
                   AILoadingStatus={dashboardAIStatus}
                   openModal={openAddFlockModal}

@@ -9,7 +9,6 @@ import useSymptomAnalysis from "./useSymptomAnalysis";
 
 export default function useInputSearch(link: string, handleChange: ( field: keyof ScheduleFormData, value: NativeSyntheticEvent<TextInputChangeEventData> | boolean | Date | string) => void){
   const {USER_ID} = useSymptomAnalysis();
-
   const [results, setResults] = useState<InputSearchResult[]>([]);
   const [query, setQuery] = useState("");
   const [show, setShow] = useState(false)

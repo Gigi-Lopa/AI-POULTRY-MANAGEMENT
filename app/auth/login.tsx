@@ -1,30 +1,10 @@
-import { saveToCache } from "@/cache";
 import Alert from "@/components/Alert";
 import useAuth from "@/hooks/useAuth";
 import styles from "@/styles/main";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 const Login = () => {
-  const [loading, setLoading] = useState(false);
-  const { user, handleChange, login } = useAuth();
-  const [isInvalid, setIsInvalid] = useState(false);
-  const router = useRouter()
-
-  const handleSubmit = async () => {
-    setLoading(true); 
-    const response:any = login();
-    
-    if (response.success) {
-      const token = {userID : response.user_id}
-      saveToCache("token", token);
-      router.navigate("/home/home")
-    } else {
-      setIsInvalid(true);
-      setTimeout(()=> {setIsInvalid(false)}, 3500)
-    }
-    setLoading(false);
-  };
+  const { user, isInvalid, loading, handleChange, login } = useAuth();
 
   return (
     <View style={[styles.screen, styles.container, { paddingTop: 50 }]}>
@@ -68,7 +48,7 @@ const Login = () => {
             { marginTop: 20, padding: 12 },
           ]}
           disabled={loading}
-          onPress={handleSubmit}
+          onPress={login}
         >
           <Text style={[styles.h6, { color: "#fff", textAlign: "center" }]}>
             Sign In

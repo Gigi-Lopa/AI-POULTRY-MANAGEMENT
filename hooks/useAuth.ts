@@ -1,3 +1,5 @@
+import { saveToCache } from "@/cache";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 
 
@@ -8,7 +10,8 @@ export default function useAuth() {
     password: "",
     confirmPassword: "",
   });
-
+  const router = useRouter();
+  const [isInvalid, setIsInvalid] = useState(false);
   const [loading, setLoading] = useState(false);
   const handleChange = (field: keyof typeof user, value: string) => {
     setUser((prev) => ({ ...prev, [field]: value }));
@@ -41,7 +44,17 @@ export default function useAuth() {
       });
 
       const data = await res.json();
-      return data;
+      console.log("Login response:", data);
+      if (data.isValid) {
+          const token = {userID : data.user_id}
+          saveToCache("token", token);
+          router.navigate("/home/home")
+        } else {
+          setIsInvalid(true);
+          setTimeout(()=> {setIsInvalid(false)}, 3500)
+        }
+        setLoading(false);
+
     } catch (error) {
       return { isValid: false, message: "Network error. Try again." };
     } finally {
@@ -52,6 +65,7 @@ export default function useAuth() {
   return {
     user,
     loading,
+    isInvalid,
     handleChange,
     resetForm,
     login,

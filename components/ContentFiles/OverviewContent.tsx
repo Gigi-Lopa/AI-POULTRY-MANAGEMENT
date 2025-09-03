@@ -1,5 +1,4 @@
 
-import useOverviewContent from "@/hooks/useOverviewContent";
 import styles from "@/styles/main";
 import { AIRecommendation, FlockResponse } from "@/types";
 import { Brain, Plus } from "lucide-react-native";
@@ -14,32 +13,30 @@ interface OverviewContentProps {
   openModal: (event: GestureResponderEvent) => void;
   flocks : FlockResponse[],
   deleteFlock : (id : string) => void;
-  setFlocks  : (value: FlockResponse[])=> void,
   AI_RECOMMENDATIONS : AIRecommendation[],
+  status : {
+    loading : boolean,
+    error : boolean
+  }
   AILoadingStatus :  {
     loading: boolean
   }
+
 }
 
-const OverviewContent = ({ openModal, flocks, deleteFlock, setFlocks, AILoadingStatus, AI_RECOMMENDATIONS }: OverviewContentProps) => {
-  const {
-    loading,
-    error,
-    empty
-  } = useOverviewContent({setFlocks});
-
+const OverviewContent = ({ status, openModal, flocks, deleteFlock, AILoadingStatus, AI_RECOMMENDATIONS }: OverviewContentProps) => {
   return (
     <View>
-      {loading && (
+      {status.loading && (
         <View style={[styles.h30, styles.w100, styles.flexColumn, styles.centerItems]}>
           <Spinner size="medium" />
           <Text style={[styles.p]}>Loading...</Text>
         </View>
       )}
 
-      {error && <Alert message="An error occurred. Please try again." variant="danger" />}
-      {empty && !loading && !error && <Alert message="No flocks registered." variant={"ghost"} />}
-      {!loading && !error && !empty && flocks.map((flock: FlockResponse) => <FlockCard deleteFlock = {deleteFlock} key={flock._id} flock={flock} />)}
+      {status.error && <Alert message="An error occurred. Please try again." variant="danger" />}
+      {flocks.length === 0 && !status.loading && !status.error && <Alert message="No flocks registered." variant={"ghost"} />}
+      {!status.loading && !status.error && flocks.length !== 0  && flocks.map((flock: FlockResponse) => <FlockCard deleteFlock = {deleteFlock} key={flock._id} flock={flock} />)}
 
       <View style={[styles.w100, { marginTop: 12 }]}>
         <TouchableOpacity
