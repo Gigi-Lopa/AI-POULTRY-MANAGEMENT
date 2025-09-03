@@ -135,3 +135,6 @@ export interface AIChat {
   prompt : string,
   response : string,
 }
+export interface Token {
+  userID : string
+}

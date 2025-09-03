@@ -1,3 +1,4 @@
+import { saveToCache } from "@/cache";
 import Alert from "@/components/Alert";
 import useAuth from "@/hooks/useAuth";
 import styles from "@/styles/main";
@@ -6,16 +7,17 @@ import React, { useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 const Login = () => {
   const [loading, setLoading] = useState(false);
-  const { user, handleChange, login, /* saveUserId */ } = useAuth();
+  const { user, handleChange, login } = useAuth();
   const [isInvalid, setIsInvalid] = useState(false);
   const router = useRouter()
 
   const handleSubmit = async () => {
     setLoading(true); 
-    const result:any = login();
+    const response:any = login();
     
-    if (result.success) {
-     // await saveUserId(result.user_id);
+    if (response.success) {
+      const token = {userID : response.user_id}
+      saveToCache("token", token);
       router.navigate("/home/home")
     } else {
       setIsInvalid(true);

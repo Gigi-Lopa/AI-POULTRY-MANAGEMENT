@@ -22,6 +22,7 @@ interface FeedingScheduleProps {
 const FeedingScheduleContent = ({ openModal, schedules, setSchedules }: FeedingScheduleProps) => {
   const {
     feedStatus,
+    USER_ID,
     deleteSchedule,
     fetchSchedules,
 
@@ -29,7 +30,9 @@ const FeedingScheduleContent = ({ openModal, schedules, setSchedules }: FeedingS
   schedules,
   setSchedules );
 
-  useEffect (()=> fetchSchedules, [])
+  useEffect (()=> {
+    if(USER_ID) fetchSchedules()
+  }, [USER_ID])
 
   return (
     <View>

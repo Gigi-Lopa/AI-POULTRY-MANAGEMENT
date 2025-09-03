@@ -1,6 +1,6 @@
-import { USER_ID } from "@/constants";
+import { loadFromCache } from "@/cache";
 import { FlockFormData, FlockFormDataValidation, FlockResponse } from "@/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface props{
   closeModal: () => void;
@@ -10,11 +10,19 @@ interface props{
 export default function useAddFlock({closeModal, setFlocks}: props){
     const [breedType, setBreedType] = useState<string>();
     const [breadPurpose, setBreedPurpose] = useState<string>();
-   // const [userID, setUserID] = useState("68adf965334c469c39a70df1");
+    const [USER_ID, setUSER_ID] = useState(null);
     const [status, setStatus] = useState({
         error : false,
         loading: false
-  })
+    })
+
+    useEffect(()=>{
+        const getToken = async () => {
+        const token = await loadFromCache("token")
+        setUSER_ID(token.userID)
+        }
+        getToken()
+    }, [])
 
     const updateBreedPurpose = (item: string): void => {
         setBreedPurpose(item);

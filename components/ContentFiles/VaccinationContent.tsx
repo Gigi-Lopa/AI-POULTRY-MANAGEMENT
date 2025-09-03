@@ -17,13 +17,15 @@ interface props {
 function VaccinationContent({openModal, setVaccinations, vaccinations}: props) {
     const {
         status,
+        USER_ID,
         getVaccinations,
         deleteVaccination
     } = useAddVaccination({ closeModal: () => {}, setVaccinations })
 
   useEffect(()=>{
+    if (!USER_ID) return;
     getVaccinations()
-  }, [])
+  }, [USER_ID])
 
   return (
     <View>

@@ -1,4 +1,4 @@
-import { USER_ID } from "@/constants";
+import { loadFromCache } from "@/cache";
 import { FlockResponse } from "@/types";
 import { useCallback, useEffect, useState } from "react";
 
@@ -9,6 +9,7 @@ export default function useOverviewContent({setFlocks}: props){
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [empty, setEmpty] = useState(false);
+    const [USER_ID, setUSER_ID] = useState(null)
 
     const fetchFlocks = useCallback(async () => {
         try {
@@ -33,9 +34,19 @@ export default function useOverviewContent({setFlocks}: props){
         }
     }, []);
 
-  useEffect(() => {
-    fetchFlocks();
-  }, [fetchFlocks]);
+    useEffect(()=>{
+        const getToken = async () => {
+            const token = await loadFromCache("token")
+            setUSER_ID(token.userID)
+        }
+        getToken()
+    }, [])
+
+    useEffect(() => {
+        if (!USER_ID) return;
+
+        fetchFlocks();
+    }, [USER_ID, fetchFlocks]);
 
   return {
     loading,

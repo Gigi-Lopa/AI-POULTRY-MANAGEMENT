@@ -1,4 +1,4 @@
-import { USER_ID } from "@/constants";
+import { loadFromCache } from "@/cache";
 import { NotifyDay, Schedule, ScheduleFormData } from "@/types";
 import { scheduleFeedingReminder } from "@/utils/utils";
 import { useEffect, useState } from "react";
@@ -8,7 +8,7 @@ export default function useSchedule(
  onUpdate? : (value:any)=>void,
  schedules?: Schedule[],
  setSchedules? :(values :Schedule[]) => void){
- 
+  const [USER_ID, setUSER_ID] = useState(null);
   const [isNotify, setIsNotify] = useState(false);
   const [status, setStatus] = useState({
     loading : false,
@@ -46,6 +46,15 @@ export default function useSchedule(
     repeat: notifyDays,
     notify: isNotify,
   });
+
+  useEffect(()=>{
+    const getToken = async () => {
+      const token = await loadFromCache("token")
+      setUSER_ID(token.userID)
+    }
+    getToken()
+  }, [])
+
 
   useEffect(() => {
     setScheduleForm((prev) => ({
@@ -223,6 +232,7 @@ export default function useSchedule(
     validateForm,
     status, 
     feedStatus,
+    USER_ID,
     updateNotification,
     deleteSchedule,
     fetchSchedules,

@@ -1,4 +1,4 @@
-import { USER_ID } from "@/constants";
+import { loadFromCache } from "@/cache";
 import type { AIRecommendation, FlockResponse, Schedule, VaccinationRecord } from "@/types";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -11,6 +11,7 @@ export default function useHome() {
   const [dashboardAIStatus, setDashboardAIStatus] = useState({
     loading: true
   });
+  const [USER_ID, setUSER_ID] = useState(null);
   const [isAFlockMVisible, setIsAFlockMVisible] = useState(false);
   const [isScheduleMVisible, setIsScheduleMVisible] = useState(false);
   const [isVaccinationVisible, setIsVaccinationVisible] = useState(false);
@@ -69,9 +70,21 @@ export default function useHome() {
   }
 
   useEffect(()=>{
+    const getToken = async () => {
+      const token = await loadFromCache("token")
+      setUSER_ID(token.userID)
+    }
+    getToken()
+  }, [])
+
+  useEffect(()=>{
+    if (!USER_ID) return;
+
     getDashboardData()
-  //  setTimeout(()=>{getAIRecommendations()},2500)
-  }, [flocks, schedules, vaccinations])
+    setTimeout(()=>{getAIRecommendations()},2500)
+  }, [USER_ID,flocks, schedules, vaccinations])
+
+  
   const addScheduleSuccessCallBack = (schedule :any)=>{
     closeAddScheduleModal()
     setSchedules((p)=>[...p, schedule])

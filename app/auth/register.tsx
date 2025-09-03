@@ -1,3 +1,4 @@
+import { saveToCache } from "@/cache";
 import Alert from "@/components/Alert";
 import useAuth from "@/hooks/useAuth";
 import styles from "@/styles/main";
@@ -6,7 +7,7 @@ import React, { useState } from "react";
 import { Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const Signup = () => {
-  const { user, handleChange, resetForm, /* saveUserId */ } = useAuth();
+  const { user, handleChange, resetForm } = useAuth();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const router = useRouter();
@@ -38,7 +39,7 @@ const Signup = () => {
 
       if (data.success) {
         resetForm();
-        //await saveUserId(data.user_id);
+        saveToCache("token", data.user_id);
         router.navigate("/home/home");
       } else {
         setErrorMessage(data.message || "Registration failed");

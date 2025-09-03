@@ -1,12 +1,21 @@
-import { USER_ID } from "@/constants";
+import { loadFromCache } from "@/cache";
 import { AIChat } from "@/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function useSymptomAnalysis (){
 
     const [loading, setLoading] = useState(false);
     const [suggestions, setSuggestions]= useState<AIChat[]>([])
     const [prompt, setPrompt] = useState("")
+    const [USER_ID, setUSER_ID] = useState(null);
+
+    useEffect(()=>{
+        const getToken = async () => {
+          const token = await loadFromCache("token")
+          setUSER_ID(token.userID)
+        }
+        getToken()
+    }, [])
 
     const getSuggestion = () => {
         setLoading(true);
@@ -51,6 +60,7 @@ export default function useSymptomAnalysis (){
         loading,
         suggestions,
         prompt,
+        USER_ID,
         setPrompt,
         getSuggestion,
     }

@@ -1,6 +1,6 @@
-import { USER_ID } from "@/constants";
+import { loadFromCache } from "@/cache";
 import type { VaccinationFormData, VaccinationRecord } from "@/types/index";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, NativeSyntheticEvent, TextInputChangeEventData } from "react-native";
 
 interface Props {
@@ -9,6 +9,7 @@ interface Props {
 }
 
 export default function useAddVaccination({ closeModal, setVaccinations}: Props) {
+  const [USER_ID, setUSER_ID] = useState(null)
   const [formData, setFormData] = useState<VaccinationFormData>({
     flock_id: "",
     flockName: "",
@@ -21,6 +22,14 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
 
   const [validationForm, setValidationForm] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState({ loading: false, error: false });
+
+  useEffect(()=>{
+    const getToken = async () => {
+      const token = await loadFromCache("token")
+      setUSER_ID(token.userID)
+    }
+    getToken()
+  }, [])
 
   const handleChange = (field: any, value: NativeSyntheticEvent<TextInputChangeEventData> | boolean | Date | string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -130,6 +139,7 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
     formData,
     validationForm,
     status,
+    USER_ID,
     deleteVaccination,
     getVaccinations,
     handleChange,

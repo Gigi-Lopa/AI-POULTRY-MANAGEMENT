@@ -1,4 +1,3 @@
-//import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 
 
@@ -11,15 +10,6 @@ export default function useAuth() {
   });
 
   const [loading, setLoading] = useState(false);
-
-  /* const saveUserId = async (userId: string) => {
-    try {
-      await AsyncStorage.setItem("user_id", userId);
-    } catch (error) {
-      console.error("Error saving user_id", error);
-    }
-  }; */
-
   const handleChange = (field: keyof typeof user, value: string) => {
     setUser((prev) => ({ ...prev, [field]: value }));
   };
@@ -62,7 +52,6 @@ export default function useAuth() {
   return {
     user,
     loading,
-    //saveUserId,
     handleChange,
     resetForm,
     login,
