@@ -47,7 +47,7 @@ export default function useAuth() {
       console.log("Login response:", data);
       if (data.isValid) {
           const token = {userID : data.user_id}
-          saveToCache("token", token);
+          await saveToCache("token", token);
           router.navigate("/home/home")
         } else {
           setIsInvalid(true);

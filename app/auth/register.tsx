@@ -41,7 +41,7 @@ const Signup = () => {
         resetForm();
 
         const token = {userID : data.user_id}
-        saveToCache("token", token);
+        await saveToCache("token", token);
         router.navigate("/home/home");
       } else {
         setErrorMessage(data.message || "Registration failed");
