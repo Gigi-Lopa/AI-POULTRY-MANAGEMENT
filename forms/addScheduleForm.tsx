@@ -109,8 +109,8 @@ const AddScheduleForm = ({onUpdate}:props) => {
           <Alert variant="danger" message="Flock not Selected"/>
         }
         {
-          status.error &&
-           <Alert variant="danger" message="Internal Server error"/>
+          status.error.length != 0 &&
+           <Alert variant="danger" message={status.error}/>
         }
         {
           status.success && 

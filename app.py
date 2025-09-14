@@ -464,18 +464,17 @@ class FeedingSchedule(Resource):
     def put(self):
         payload = request.get_json()
         data = payload.get("data", None)
+
         if not data:
             return {"success": False, "message": "Missing data"}, 400
 
-        schedules = []
+        flock =  flocks.find_one({"_id" : ObjectId(data.get("flockID"))})
 
-        for schedule in data:
-            flock =  flocks.find_one({"_id" : ObjectId(schedule.get("flockID"))})
-            if not flock:
-                return {
-                    "success" : False,
-                    "message" :"Flock not registered in the system"
-                }
+        if not flock:
+            return {
+                "success" : False,
+                "message" :"Flock not registered in the system"
+            }
         
         schedule = {
             "scheduleOwner": data["scheduleOwner"],
@@ -492,13 +491,13 @@ class FeedingSchedule(Resource):
             res = feeding_schedules.insert_one(schedule)
             return {
                 "success": True, 
-                "results" : {
+                "result" : {
                     "_id": str(res.inserted_id),
                     "flockID": data.get("flockID"),
                     "flockName": flock.get("flockName"),
                     "feed" : data.get("feed"),
                     "amount" : data.get("amount"),
-                    "time": data.get("time"),
+                    "time": data["time"],
                     "repeat": data.get("repeat", []),
                     "notify": data.get("notify", False),
                 }}, 201
@@ -508,7 +507,7 @@ class FeedingSchedule(Resource):
             return {
                 "message"  :"An error occurred"
             }, 401
-        
+
     def get(self):
         user_id = request.args.get("id")
         schedules = list(feeding_schedules.find({"scheduleOwner": str(user_id)}))
@@ -597,8 +596,9 @@ class Vaccinations(Resource):
             return {"message": "Error occurred while fetching vaccination records"}, 500
     
     def put(self):
-        data = request.get_json()
-
+        payload = request.get_json()
+        data = payload.get("data", None)
+        
         if not data :
             return{
                 "message" : "Empty body"

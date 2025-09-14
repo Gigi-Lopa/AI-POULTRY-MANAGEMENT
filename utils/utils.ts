@@ -23,18 +23,27 @@ const dayMap: Record<string, number> = {
   saturday: 6,
 };
 
-export function extractTime(isoString: string) {
+export function extractTime(isoString: string | Date | undefined) {
+  if (!isoString) return "--:--";
   const date = new Date(isoString);
-  return date.toISOString().substring(11, 16); 
+  if (isNaN(date.getTime())) return "--:--"; 
 
+  return date.toISOString().substring(11, 16);
 }
 
-export function extractDays(days: string){
+
+export function extractDays(days?: string) {
+  if (!days) return ""; 
+
   return days
-      .split(" ")
-      .filter(Boolean)
-      .map(day => `${day[0].toUpperCase()}${day[1]}${day[2]}`)
-      .join(", ");
+    .split(" ")
+    .filter(Boolean)
+    .map(day => {
+      return day.length >= 3
+        ? `${day[0].toUpperCase()}${day[1]}${day[2]}`
+        : day[0].toUpperCase() + day.slice(1);
+    })
+    .join(", ");
 }
 
 export async function registerForPushNotificationsAsync() {

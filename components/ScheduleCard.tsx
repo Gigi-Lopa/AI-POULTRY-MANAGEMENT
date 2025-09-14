@@ -7,13 +7,15 @@ import React, { useState } from 'react';
 import { Switch, Text, TouchableOpacity, View } from 'react-native';
 
 interface props{
+    isOffline : boolean | null,
     schedule: Schedule,
     deleteSchedule : (id: string) => void
 }
 
-const ScheduleCard = ({schedule, deleteSchedule} : props) => {
+const ScheduleCard = ({schedule, deleteSchedule, isOffline} : props) => {
     const [isEnabled, setIsEnabled] = useState(schedule.notify);
     const {updateNotification} = useSchedule();
+    const scheduleTime = new Date(schedule.time); 
     const toggleSwitch = () => {
     setIsEnabled(prev => {
         const state  = !prev;
@@ -22,6 +24,7 @@ const ScheduleCard = ({schedule, deleteSchedule} : props) => {
         }, 1500);
         return state;
     });
+
 };
 
   return (
@@ -33,7 +36,7 @@ const ScheduleCard = ({schedule, deleteSchedule} : props) => {
                         <Clock size={15} color={ styles.bg_purple.backgroundColor}/>
                     </View>
                     <View style= {{marginRight : 15}}>
-                        <Text style = {[styles.h4, {marginTop :5}]}>{extractTime(schedule.time)}</Text>
+                        <Text style = {[styles.h4, {marginTop :5}]}>{extractTime(scheduleTime)}</Text>
                     </View>
                     <View style={[styles.flexRow, styles.selfCenter]}>
                         <View style = {[styles.pill, styles.bg_success]}>
@@ -43,8 +46,8 @@ const ScheduleCard = ({schedule, deleteSchedule} : props) => {
                 </View>
             </View>
             <View style = {[styles.w40, , styles.flexRow, styles.justifyEnd]}>
-                <TouchableOpacity onPress={()=>deleteSchedule(schedule._id)}>
-                    <Trash size = {15} color = {styles.text_danger.color}/>
+                <TouchableOpacity disabled = {isOffline ?? false} onPress={()=>deleteSchedule(schedule._id)}>
+                    <Trash size = {15} color = {!isOffline ? styles.text_danger.color : styles.bg_danger_30.backgroundColor}/>
                 </TouchableOpacity>
             </View>
         </View>

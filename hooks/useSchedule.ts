@@ -1,6 +1,7 @@
-import { clearCache, loadFromCache, saveToCache } from "@/cache";
+import { clearCache, loadFromCache, saveToCache, updateCache } from "@/cache";
 import { NetworkStatusContext } from "@/context/NetworkStatusProvider";
 import { NotifyDay, Schedule, ScheduleFormData } from "@/types";
+import { submitData } from "@/utils/submitHandlers";
 import { scheduleFeedingReminder } from "@/utils/utils";
 import { useContext, useEffect, useState } from "react";
 import { Alert, NativeSyntheticEvent, TextInputChangeEventData, ToastAndroid } from "react-native";
@@ -8,13 +9,14 @@ import { Alert, NativeSyntheticEvent, TextInputChangeEventData, ToastAndroid } f
 export default function useSchedule(
  onUpdate? : (value:any)=>void,
  schedules?: Schedule[],
- setSchedules? :(values :Schedule[]) => void){
+ setSchedules?: React.Dispatch<React.SetStateAction<Schedule[]>>)
+ {
   const {isOffline} = useContext(NetworkStatusContext)
   const [USER_ID, setUSER_ID] = useState(null);
   const [isNotify, setIsNotify] = useState(false);
   const [status, setStatus] = useState({
     loading : false,
-    error : false,
+    error : "",
     success : false
     })
   const [validateForm, setValidationForm] = useState({
@@ -56,7 +58,6 @@ export default function useSchedule(
     }
     getToken()
   }, [])
-
 
   useEffect(() => {
     setScheduleForm((prev) => ({
@@ -200,50 +201,54 @@ export default function useSchedule(
       setFeedStatus((p) => ({ ...p, loading: false }));
     }
   };
-
-
-  const submitForm = (finalData: ScheduleFormData) => {
+  const submitForm = async(finalData: ScheduleFormData) => {
     setStatus((p)=> ({...p , loading: true}))
     clearValidationErrors()
-
-    const onSuccess = () => {}
-    fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/feeding`, {
-      method : "PUT",
-      headers : {
-        "Content-Type" : "application/json"
-      },
-      body :JSON.stringify({
-        "scheduleOwner": USER_ID,
-        "flockID": finalData.flock_id,
-        "feed" : finalData.feed,
-        "amount" : finalData.amount,
-        "time": finalData.time,
-        "repeat": returnSelectedDays(),
-        "notify": finalData.notify,
-      })
-    })
-    .then(response => response.json())
-    .then(response => {
-      if(response.success){
-        if(response.schedule.notify){
-          scheduleFeedingReminder(response.schedule)
-        }
-        
-        setTimeout(()=>{if (onUpdate) onUpdate(response.schedule);}, 100)
-        setStatus((p)=> ({...p , success: true}))
-        return;
+    const DATA = 
+    {
+      "scheduleOwner": USER_ID,
+      "flockID": finalData.flock_id,
+      "feed" : finalData.feed,
+      "amount" : finalData.amount,
+      "time": finalData.time,
+      "repeat": returnSelectedDays(),
+      "notify": finalData.notify,
+    }
+    
+    const onSuccess = async (response: any) => {
+      if (response.success) {
+          if(response.result.notify){
+            scheduleFeedingReminder(response.schedule)
+          }
+          setTimeout(()=>{if (onUpdate) onUpdate(response.result);}, 100)
+          
+          await updateCache("schedules", [response.result] , "data");
+          setStatus((p) => ({ ...p, success: true }));
+          return;
       }
-      setStatus((p)=> ({...p , error: true}))
-    })
-    .catch(error =>{
-      console.log(error)
-      setStatus((p)=> ({...p , error: true}))
-    }) 
-    .finally(()=>{
-      setStatus(()=> ({loading : false , error: false,success : false}))
-    })
 
-  };
+      setStatus((p) => ({ ...p, error: response.message || "Unknown error" }));
+    };
+
+
+    const onError = (error: any) =>{
+      console.log(error);
+      setStatus((p)=> ({...p , error: error?.message}))
+    } 
+
+    const onFinal = () => setStatus(()=> ({loading : false , error: "" ,success : false}))
+
+    if(isOffline === false){
+      submitData(
+        DATA,
+        "/api/feeding",
+        "PUT",
+        onSuccess,
+        onError,
+        onFinal
+      )
+    } 
+};
 
   return {
     scheduleForm,

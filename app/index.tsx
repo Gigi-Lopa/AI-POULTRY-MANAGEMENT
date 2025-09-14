@@ -5,7 +5,8 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Bird } from "lucide-react-native";
 import { useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { LogBox, Text, TouchableOpacity, View } from "react-native";
+LogBox.ignoreAllLogs();
 
 export default function Index() {
   const router = useRouter();

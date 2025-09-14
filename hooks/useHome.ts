@@ -1,13 +1,11 @@
 import { clearCache, loadFromCache, saveToCache, updateCache } from "@/cache";
-import { NetworkStatusContext } from "@/context/NetworkStatusProvider";
 import type { AIRecommendation, FlockResponse, Schedule, VaccinationRecord } from "@/types";
 import { submitData } from "@/utils/submitHandlers";
 import { useRouter } from "expo-router";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ToastAndroid } from "react-native";
 export default function useHome() {
   const router = useRouter();
-  const {isOffline} = useContext(NetworkStatusContext)
   const [dashboardCounts, setDashboardCounts] = useState({
     flocks :0,
     birds : 0
@@ -127,22 +125,21 @@ export default function useHome() {
       }
     };
      const sync = async () => {
-      const DATA = await loadFromCache("updates");
-      if (!DATA?.flocks?.length) return;
+        const DATA = await loadFromCache("updates");
+        if (!DATA?.flocks?.length) return;
 
-      const onSuccess = (response:any) => {
-        ToastAndroid.show("Flocks synchronization successful", ToastAndroid.SHORT);
-        setFlocks((prevFlocks) => [
-          ...prevFlocks,
-          ...response.results.filter(
-              (nf: any) => !prevFlocks.some((pf) => pf._id === nf._id) 
-          ),
-        ]);
-        updateCache("updates", { flocks: [] }, "syncData");
+        const onSuccess = (response:any) => {
+          ToastAndroid.show("Flocks synchronization successful", ToastAndroid.SHORT);
+          setFlocks((prevFlocks) => [
+            ...prevFlocks,
+            ...response.results.filter(
+                (nf: any) => !prevFlocks.some((pf) => pf._id === nf._id) 
+            ),
+          ]);
+          updateCache("updates", { flocks: [] }, "syncData");
+        };
+        submitData(DATA.flocks, "/api/flocks", "POST", onSuccess);    
       };
-
-      submitData(DATA.flocks, "/api/flocks", "POST", onSuccess);
-    };
 
     sync();
     getToken();
@@ -157,7 +154,7 @@ export default function useHome() {
     if (!USER_ID) return;
 
     getDashboardData();
-    //setTimeout(() => getAIRecommendations(), 2500);
+    setTimeout(() => getAIRecommendations(), 2500);
   }, [USER_ID, flocks]);
 
 

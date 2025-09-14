@@ -49,15 +49,22 @@ export const updateCache = async (
       const raw = await FileSystem.readAsStringAsync(fileUri);
       existingData = JSON.parse(raw);
     }
-
     const updatedData =
-      type === "syncData"
-        ? { ...existingData, ...newData }
-        : {
-            ...existingData,
-            results: [...(existingData.results || []), ...(newData || [])],
-          }; 
+    type === "syncData"
+      ? Object.entries(newData).reduce((acc, [key, value]) => {
+          if (Array.isArray(value) && Array.isArray(acc[key])) {
+            acc[key] = [...acc[key], ...value];
+          } else {
+            acc[key] = value;
+          }
+          return acc;
+        }, { ...existingData })
+      : {
+          ...existingData,
+          results: [...(existingData.results || []), ...(newData || [])],
+        };
 
+   
     await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(updatedData));
     return updatedData;
   } catch (error) {

@@ -6,9 +6,10 @@ import { Text, TouchableOpacity, View } from 'react-native'
 
 interface props{
     vaccination : VaccinationRecord;
+    isOffline : boolean | null
     onDelete:(id: string) => void
 }
-export default function VaccinationCard({vaccination, onDelete}: props) {
+export default function VaccinationCard({vaccination, onDelete, isOffline}: props) {
   
   return (
     <View style = {[styles.w100, styles.poultryCard, styles.rounded, styles.bg_white , {marginBottom : 10}]}>
@@ -24,8 +25,8 @@ export default function VaccinationCard({vaccination, onDelete}: props) {
                 </View>
             </View>
             <View style = {[styles.w40, , styles.flexRow, styles.justifyEnd, styles.selfCenter]}>
-                <TouchableOpacity onPress={()=> onDelete(vaccination._id ?? "")}>
-                    <Trash size = {15} color = {styles.text_danger.color}/>
+                <TouchableOpacity disabled = {isOffline ?? false} onPress={()=> onDelete(vaccination._id ?? "")}>
+                    <Trash size = {15} color = {!isOffline ? styles.text_danger.color : styles.bg_danger_30.backgroundColor}/>
                 </TouchableOpacity>
             </View>
         </View>

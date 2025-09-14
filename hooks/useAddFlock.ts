@@ -114,6 +114,7 @@ export default function useAddFlock({closeModal, setFlocks}: props){
         }
         const normalized = DATA.map((flock:any) => ({
             ...flock,
+            _id : new Date().toISOString(),
             breedType: flock.breedType?.label ?? flock.breedType,
             flockPurpose: flock.flockPurpose?.label ?? flock.flockPurpose,
         }));

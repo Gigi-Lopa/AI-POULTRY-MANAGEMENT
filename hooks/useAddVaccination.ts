@@ -1,6 +1,7 @@
-import { clearCache, loadFromCache, saveToCache } from "@/cache";
+import { clearCache, loadFromCache, saveToCache, updateCache } from "@/cache";
 import { NetworkStatusContext } from "@/context/NetworkStatusProvider";
 import type { VaccinationFormData, VaccinationRecord } from "@/types/index";
+import { submitData } from "@/utils/submitHandlers";
 import { useContext, useEffect, useState } from "react";
 import { Alert, NativeSyntheticEvent, TextInputChangeEventData } from "react-native";
 
@@ -119,12 +120,7 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
     };
 
   function submitVaccination(finalData: VaccinationFormData){
-    fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/vaccinations`, {
-      method : "PUT",
-      headers : {
-        "Content-Type" : "application/json"
-      }, 
-      body : JSON.stringify({
+    const DATA = {
         "flockID" : finalData.flock_id,
         "vaccinationOwner": USER_ID,
         "vaccineName" : finalData.vaccineName,
@@ -132,10 +128,8 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
         "manufacturer"  : finalData.manufacturer,
         "dosage" : finalData.dosage,
         "route" : finalData.route,
-      })
-    })
-    .then(response => response.json())
-    .then(response => {
+    }
+    const onSuccess = async(response: any) =>{
       if(response.success){
         const flockName = response.vaccination.flockName; 
         const _id = response.vaccination._id
@@ -146,16 +140,23 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
         };
 
         if(setVaccinations) setVaccinations(prev => [...prev, newRecord]);
+        await updateCache("vaccinations", [newRecord], "data")
         if (closeModal) closeModal();
       }
-    })
-    .catch(error =>{
-      console.log(error)
-      setStatus((p)=> ({ ...p, error: true }));
-    })
-    .finally(()=> setStatus({ loading: false, error: false }))
+    }
+    const onError = (error:any)=>{console.log(error); setStatus((p)=> ({ ...p, error: true}))}
+    const onFinal = ()=> setStatus({ loading: false, error: false})
+    if(isOffline === false){
+      submitData(
+        DATA,
+        "/api/vaccinations",
+        "PUT",
+        onSuccess,
+        onError,
+        onFinal
+      )
+    }
   }
-
   return {
     formData,
     validationForm,
