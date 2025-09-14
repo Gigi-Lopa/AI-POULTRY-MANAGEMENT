@@ -1,6 +1,7 @@
-import { loadFromCache } from "@/cache";
+import { clearCache, loadFromCache, saveToCache } from "@/cache";
+import { NetworkStatusContext } from "@/context/NetworkStatusProvider";
 import type { VaccinationFormData, VaccinationRecord } from "@/types/index";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Alert, NativeSyntheticEvent, TextInputChangeEventData } from "react-native";
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 
 export default function useAddVaccination({ closeModal, setVaccinations}: Props) {
   const [USER_ID, setUSER_ID] = useState(null)
+  const {isOffline} = useContext(NetworkStatusContext)
   const [formData, setFormData] = useState<VaccinationFormData>({
     flock_id: "",
     flockName: "",
@@ -84,18 +86,37 @@ export default function useAddVaccination({ closeModal, setVaccinations}: Props)
 
     
   }
-  function getVaccinations (){
-        setStatus({ loading: true, error: false });
-        fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/vaccinations?id=${USER_ID}`)
-        .then(response => response.json())
-        .then(response => {
-          if (response.success){
-            if(setVaccinations) setVaccinations(response.vaccinations)
-          }
-        })
-        .catch(error => console.log(error)) 
-        .finally(()=> setStatus({ loading: false, error: false }))
-  }
+  const getVaccinations = async () => {
+    setStatus({ loading: true, error: false });
+
+    try {
+      let vaccinations;
+
+      if (isOffline) {
+        const data = await loadFromCache("vaccinations");
+        vaccinations = data.results
+      } else {
+        const res = await fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/vaccinations?id=${USER_ID}`);
+        const response = await res.json();
+
+        if (response.success) {
+          vaccinations = response.results
+          await clearCache("vaccinations");
+          await saveToCache("vaccinations", {
+            results : vaccinations
+          });
+        }
+      }
+
+      if (setVaccinations) setVaccinations(vaccinations ?? []);
+    } catch (error) {
+        console.error(error);
+        setStatus({ loading: false, error: true });
+        return;
+    }
+
+    setStatus({ loading: false, error: false });
+    };
 
   function submitVaccination(finalData: VaccinationFormData){
     fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/vaccinations`, {

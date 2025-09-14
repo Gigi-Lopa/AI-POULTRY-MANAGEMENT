@@ -16,7 +16,7 @@ interface OverviewContentProps {
   AI_RECOMMENDATIONS : AIRecommendation[],
   status : {
     loading : boolean,
-    error : boolean
+    error : string 
   }
   AILoadingStatus :  {
     loading: boolean
@@ -34,9 +34,9 @@ const OverviewContent = ({ status, openModal, flocks, deleteFlock, AILoadingStat
         </View>
       )}
 
-      {status.error && <Alert message="An error occurred. Please try again." variant="danger" />}
-      {flocks.length === 0 && !status.loading && !status.error && <Alert message="No flocks registered." variant={"ghost"} />}
-      {!status.loading && !status.error && flocks.length !== 0  && flocks.map((flock: FlockResponse) => <FlockCard deleteFlock = {deleteFlock} key={flock._id} flock={flock} />)}
+      {status.error.length != 0 && <Alert message={status.error} variant="danger" />}
+      {flocks.length === 0 && !status.loading && status.error.length === 0 && <Alert message="No flocks registered." variant={"ghost"} />}
+      {!status.loading && status.error.length === 0 && flocks.length !== 0  && flocks.map((flock: FlockResponse) => <FlockCard deleteFlock = {deleteFlock} key={flock._id} flock={flock} />)}
 
       <View style={[styles.w100, { marginTop: 12 }]}>
         <TouchableOpacity

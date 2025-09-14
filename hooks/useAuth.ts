@@ -44,7 +44,6 @@ export default function useAuth() {
       });
 
       const data = await res.json();
-      console.log("Login response:", data);
       if (data.isValid) {
           const token = {userID : data.user_id}
           await saveToCache("token", token);

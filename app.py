@@ -245,58 +245,58 @@ class Flocks(Resource):
         }
 
     def post(self):
-        data = request.get_json()
-        
+        payload = request.get_json()
+        data = payload.get("data", None)
         if not data:
             return {
                 "success": False,
                 "message": "Request body cannot be empty."
             }, 400
 
-        
-        required_fields = ["flockOwner", "flockName", "breedType", "numberOfBirds", "age", "locationCoop", "flockPurpose"]
-        missing_fields = [field for field in required_fields if not data.get(field)]
+        for flock in data:
+            current_flock = flocks.find_one({
+                "flockOwner": str(flock.get("flockOwner")),
+                "flockName": flock["flockName"]
+            })
 
-        if missing_fields:
-            return {
-                "success": False,
-                "message": f"Missing required fields: {', '.join(missing_fields)}"
-            }, 400  
-        
-        current_flock = flocks.find_one({
-            "flockOwner" : str(data.get("id")),
-            "flockName" : data["flockName"]
-        })
+            if current_flock:
+                return {
+                    "success": False,
+                    "isExist": True,
+                    "message": "Flock already exists"
+                }, 400
 
-        if current_flock:
-            return {
-                "success" : False,
-                "isExist" : True,
-                "message" : "Flock already exists"
-            }, 400
+        BATCH_FLOCKS = []
+        for flock in data:
+            flockData = {
+                "flockOwner": str(flock.get("flockOwner")),
+                "flockName": flock["flockName"],
+                "breedType": flock["breedType"],
+                "numberOfBirds": flock["numberOfBirds"],
+                "age": flock["age"],
+                "locationCoop": flock["locationCoop"],
+                "flockPurpose": flock["flockPurpose"],
+                "created_at": datetime.now(cat_tz)
+            }
+            BATCH_FLOCKS.append(flockData)
 
-        flockData = {
-            "flockOwner" : str(data.get("flockOwner")),
-            "flockName": data["flockName"],
-            "breedType": data["breedType"],
-            "numberOfBirds": data["numberOfBirds"],
-            "age": data["age"],
-            "locationCoop": data["locationCoop"],
-            "flockPurpose": data["flockPurpose"],
-            "created_at" : datetime.now(cat_tz)
-        }
         try:
-            insert_result = flocks.insert_one(flockData)
-            flockData["_id"] = str(insert_result.inserted_id)
-            flockData["breedType"] = str(flockData["breedType"]["label"])
-            flockData["flockPurpose"] = str(flockData["flockPurpose"]["label"])
-            flockData.pop("flockOwner")
-            flockData.pop("created_at")
+            insert_result = flocks.insert_many(BATCH_FLOCKS)
 
+            inserted_flocks = []
+            for flockData, inserted_id in zip(BATCH_FLOCKS, insert_result.inserted_ids):
+                flockData["_id"] = str(inserted_id)
+                flockData["breedType"] = str(flockData["breedType"]["label"])
+                flockData["flockPurpose"] = str(flockData["flockPurpose"]["label"])
+                flockData.pop("flockOwner", None)
+                flockData.pop("created_at", None)
+                inserted_flocks.append(flockData)
+        
+            pprint(inserted_flocks)
             return {
                 "success": True,
-                "flock": flockData,
-                "message": "Flock added successfully."
+                "results": inserted_flocks,
+                "message": f"{len(inserted_flocks)} flock(s) added successfully."
             }, 200
 
         except Exception as e:
@@ -408,7 +408,7 @@ class Flocks(Resource):
             return {
                 "success" : True,
                 "message" : "Flocks pulled successfully",
-                "flocks" : flocks_
+                "results" : flocks_
             }, 200
            
         except Exception as e:
@@ -462,17 +462,20 @@ class SearchFlocks(Resource):
             }, 500
 class FeedingSchedule(Resource):
     def put(self):
-        data = request.get_json()
+        payload = request.get_json()
+        data = payload.get("data", None)
         if not data:
             return {"success": False, "message": "Missing data"}, 400
 
-        flock =  flocks.find_one({"_id" : ObjectId(data.get("flockID"))})
+        schedules = []
 
-        if not flock:
-            return {
-                "success" : False,
-                "message" :"Flock not registered in the system"
-            }
+        for schedule in data:
+            flock =  flocks.find_one({"_id" : ObjectId(schedule.get("flockID"))})
+            if not flock:
+                return {
+                    "success" : False,
+                    "message" :"Flock not registered in the system"
+                }
         
         schedule = {
             "scheduleOwner": data["scheduleOwner"],
@@ -489,13 +492,13 @@ class FeedingSchedule(Resource):
             res = feeding_schedules.insert_one(schedule)
             return {
                 "success": True, 
-                "schedule" : {
+                "results" : {
                     "_id": str(res.inserted_id),
                     "flockID": data.get("flockID"),
                     "flockName": flock.get("flockName"),
                     "feed" : data.get("feed"),
                     "amount" : data.get("amount"),
-                    "time": data["time"],
+                    "time": data.get("time"),
                     "repeat": data.get("repeat", []),
                     "notify": data.get("notify", False),
                 }}, 201
@@ -516,7 +519,7 @@ class FeedingSchedule(Resource):
         
         return {
             "success": True, 
-            "schedules": schedules
+            "results": schedules
         }, 200
     
     def patch(self):
@@ -586,7 +589,7 @@ class Vaccinations(Resource):
             return {
                 "success": True,
                 "count": len(vaccinations),
-                "vaccinations": vaccinations
+                "results": vaccinations
             }, 200
 
         except Exception as e:
@@ -653,6 +656,13 @@ class Vaccinations(Resource):
             app.logger.exception("Error deleting vaccination record")
             return {"message": "Error occurred while deleting vaccination record"}, 500
 
+class System(Resource):
+    def get(self):
+        return {
+            "success": True,
+            "message": "System is up and running"
+        }, 200
+    
 api.add_resource(AI, "/api/ai")
 api.add_resource(Dashboard, "/api/dashboard")
 api.add_resource(Flocks, "/api/flocks")
@@ -660,6 +670,7 @@ api.add_resource(Auth, "/api/auth")
 api.add_resource(FeedingSchedule, "/api/feeding")
 api.add_resource(SearchFlocks, "/api/flocks/s")
 api.add_resource(Vaccinations, "/api/vaccinations")
+api.add_resource(System, "/api/system")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

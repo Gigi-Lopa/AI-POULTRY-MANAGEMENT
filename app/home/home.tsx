@@ -6,6 +6,7 @@ import DashboardCard from "@/components/DashboardCard";
 import Header from "@/components/Header";
 import Modal from "@/components/Modal";
 import TopTabs from "@/components/TopTabs";
+import { NetworkStatusProvider } from "@/context/NetworkStatusProvider";
 import AddFlockForm from "@/forms/addFlockForm";
 import AddScheduleForm from "@/forms/addScheduleForm";
 import AddVaccinationForm from "@/forms/addVaccinationForm";
@@ -57,96 +58,99 @@ export default function Index() {
   useEffect(()=>{registerForPushNotificationsAsync()}, [])
 
   return (
-    <View style={[styles.screen, styles.positionRelative]}>
-      {isAFlockMVisible && (
-        <Modal headerTitle="Add Flock" closeModal={closeAddFlockModal}>
-          <AddFlockForm closeModal = {closeAddFlockModal} setFlocks = {setFlocks}/>
-        </Modal>
-      )}
+    <NetworkStatusProvider>
+      <View style={[styles.screen, styles.positionRelative]}>
+        {isAFlockMVisible && (
+          <Modal headerTitle="Add Flock" closeModal={closeAddFlockModal}>
+            <AddFlockForm closeModal = {closeAddFlockModal} setFlocks = {setFlocks}/>
+          </Modal>
+        )}
 
-      {isScheduleMVisible && (
-        <Modal closeModal={closeAddScheduleModal} headerTitle="Add a schedule">
-          <AddScheduleForm onUpdate = {addScheduleSuccessCallBack}/>
-        </Modal>
-      )}
+        {isScheduleMVisible && (
+          <Modal closeModal={closeAddScheduleModal} headerTitle="Add a schedule">
+            <AddScheduleForm onUpdate = {addScheduleSuccessCallBack}/>
+          </Modal>
+        )}
 
-      {
-        isVaccinationVisible  &&
-        <Modal closeModal={closeAddVaccinationModal} headerTitle="Add a vaccination">
-          <AddVaccinationForm closeModal={closeAddVaccinationModal} setVaccinations={setVaccinations}/>
-        </Modal>
-      }
+        {
+          isVaccinationVisible  &&
+          <Modal closeModal={closeAddVaccinationModal} headerTitle="Add a vaccination">
+            <AddVaccinationForm closeModal={closeAddVaccinationModal} setVaccinations={setVaccinations}/>
+          </Modal>
+        }
 
-      <StatusBar style="dark" />
-      <Header />
-      <ScrollView>
-        <View style={[styles.container]}>
-          <View
-            style={[
-              styles.w100,
-              styles.flexRow,
-              styles.justifyBetween,
-              styles.dashboardCards,
-            ]}
-          >
-            <DashboardCard name="NUMBER " value={dashboardCounts.birds} Icon={Bird} />
-            <DashboardCard name="FLOCKS" value= {dashboardCounts.flocks} Icon={House} />
-          </View>
-          <View style={[styles.w100, styles.mTop]}>
-            <LinearGradient
-              colors={["#ae54ef", "#e7499f"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ borderRadius: 7.5 }}
+        <StatusBar style="dark" />
+        <Header />
+        <ScrollView>
+          <View style={[styles.container]}>
+            <View
+              style={[
+                styles.w100,
+                styles.flexRow,
+                styles.justifyBetween,
+                styles.dashboardCards,
+              ]}
             >
-              <View style={[styles.linearGradient, styles.flexRow]}>
-                <View style={styles.selfCenter}>
-                  <TrendingUp size={25} color={styles.text_white.color} />
+              <DashboardCard name="NUMBER " value={dashboardCounts.birds} Icon={Bird} />
+              <DashboardCard name="FLOCKS" value= {dashboardCounts.flocks} Icon={House} />
+            </View>
+            <View style={[styles.w100, styles.mTop]}>
+              <LinearGradient
+                colors={["#ae54ef", "#e7499f"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ borderRadius: 7.5 }}
+              >
+                <View style={[styles.linearGradient, styles.flexRow]}>
+                  <View style={styles.selfCenter}>
+                    <TrendingUp size={25} color={styles.text_white.color} />
+                  </View>
+                  <View style={{ marginLeft: 15 }}>
+                    <Text
+                      style={[styles.h5, styles.text_white, { marginBottom: 5 }]}
+                    >
+                      AI Recommendation
+                    </Text>
+                    <Text style={[styles.p, styles.text_white]}>
+                      Increase protein feed by 15% for better egg production
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ marginLeft: 15 }}>
-                  <Text
-                    style={[styles.h5, styles.text_white, { marginBottom: 5 }]}
-                  >
-                    AI Recommendation
-                  </Text>
-                  <Text style={[styles.p, styles.text_white]}>
-                    Increase protein feed by 15% for better egg production
-                  </Text>
-                </View>
+              </LinearGradient>
+            </View>
+            <View style={styles.mTop}>
+              <TopTabs
+                tabs={["Overview", "Feeding", "Vaccinations", "Symptom Analysis"]}
+                onTabChange={(tab) => setCurrentTab(tab)}
+              />
+              <View style={{ marginTop: 16 }}>
+                {currentTab === "Overview" && (
+                  <OverviewContent 
+                    deleteFlock = {deleteFlock}
+                    flocks={flocks}
+                    status={status}
+                    AI_RECOMMENDATIONS={AI_RECOMMENDATIONS}
+                    AILoadingStatus={dashboardAIStatus}
+                    openModal={openAddFlockModal}
+                      
+                  /> )}
+                {currentTab === "Feeding" && (
+                  <FeedingScheduleContent openModal={openAddScheduleModal} schedules = {schedules} setSchedules = {setSchedules}/>
+                )}
+                {currentTab === "Vaccinations" && <VaccinationContent openModal = { openAddVaccinationModal} closeModal={closeAddVaccinationModal} vaccinations = {vaccinations} setVaccinations = {setVaccinations}/>}
+                {currentTab === "Symptom Analysis" && <SymptomAnalysisContent 
+                  prompt = {prompt}    
+                  suggestions = {suggestions}
+                  loading= {loading}
+                  setPrompt= {setPrompt}
+                  getSuggestion = {getSuggestion}
+                />}
               </View>
-            </LinearGradient>
-          </View>
-          <View style={styles.mTop}>
-            <TopTabs
-              tabs={["Overview", "Feeding", "Vaccinations", "Symptom Analysis"]}
-              onTabChange={(tab) => setCurrentTab(tab)}
-            />
-            <View style={{ marginTop: 16 }}>
-              {currentTab === "Overview" && (
-                <OverviewContent 
-                  deleteFlock = {deleteFlock}
-                  flocks={flocks}
-                  status={status}
-                  AI_RECOMMENDATIONS={AI_RECOMMENDATIONS}
-                  AILoadingStatus={dashboardAIStatus}
-                  openModal={openAddFlockModal}
-                    
-                /> )}
-              {currentTab === "Feeding" && (
-                <FeedingScheduleContent openModal={openAddScheduleModal} schedules = {schedules} setSchedules = {setSchedules}/>
-              )}
-              {currentTab === "Vaccinations" && <VaccinationContent openModal = { openAddVaccinationModal} closeModal={closeAddVaccinationModal} vaccinations = {vaccinations} setVaccinations = {setVaccinations}/>}
-              {currentTab === "Symptom Analysis" && <SymptomAnalysisContent 
-                prompt = {prompt}    
-                suggestions = {suggestions}
-                loading= {loading}
-                setPrompt= {setPrompt}
-                getSuggestion = {getSuggestion}
-              />}
             </View>
           </View>
-        </View>
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
+    </NetworkStatusProvider>
+   
   );
 }

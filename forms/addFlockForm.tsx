@@ -64,6 +64,7 @@ const AddFlockForm = ({closeModal, setFlocks} : props) => {
           <View style={[{ width: "45%" }]}>
             <Text style={[styles.h6]}>Number of birds</Text>
             <TextInput
+              keyboardType={"number-pad"}
               style={[
                 styles.defaultInput,
                 validationForm.numberOfBirds ? styles.inputError : "",
@@ -107,8 +108,8 @@ const AddFlockForm = ({closeModal, setFlocks} : props) => {
           />
         </View>
         {
-          status.error &&
-          <Alert message="An error occurred." variant="danger"/>
+          status.error.length != 0 &&
+          <Alert message={status.error} variant="danger"/>
         }
         <TouchableOpacity
           style={[

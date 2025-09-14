@@ -1,13 +1,15 @@
-import { loadFromCache } from "@/cache";
+import { clearCache, loadFromCache, saveToCache } from "@/cache";
+import { NetworkStatusContext } from "@/context/NetworkStatusProvider";
 import { NotifyDay, Schedule, ScheduleFormData } from "@/types";
 import { scheduleFeedingReminder } from "@/utils/utils";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Alert, NativeSyntheticEvent, TextInputChangeEventData, ToastAndroid } from "react-native";
 
 export default function useSchedule(
  onUpdate? : (value:any)=>void,
  schedules?: Schedule[],
  setSchedules? :(values :Schedule[]) => void){
+  const {isOffline} = useContext(NetworkStatusContext)
   const [USER_ID, setUSER_ID] = useState(null);
   const [isNotify, setIsNotify] = useState(false);
   const [status, setStatus] = useState({
@@ -164,29 +166,47 @@ export default function useSchedule(
         ToastAndroid.show("Error updating schedule", ToastAndroid.SHORT)
       })
   }
-  const fetchSchedules = () =>{
-    setFeedStatus((p)=> ({...p, loading: true}))
-    fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/feeding?id=${USER_ID}`)
-    .then(response => response.json())
-    .then(response =>{
-      if (response.success) {
-        if(setSchedules)setSchedules(response.schedules ?? [])
-          response.schedules.map((s: Schedule)=>{
-            if (s.notify)scheduleFeedingReminder(s);  
-        })
+  const fetchSchedules = async () => {
+    setFeedStatus((p) => ({ ...p, loading: true }));
+
+    try {
+      let schedules;
+
+      if (isOffline) {
+        const data = await loadFromCache("schedules");
+        schedules = data.results
+
+      } else {
+        const res = await fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/feeding?id=${USER_ID}`);
+        const response = await res.json();
+
+        if (response.success) {
+          schedules = response.results
+          await clearCache("schedules");
+          await saveToCache("schedules", {
+            results : schedules
+          });
+        }
       }
-    })
-    .catch(error=>{
-      console.error(error)
-      Alert.alert("An error occurred")
-    })
-    .finally(()=> setFeedStatus((p)=> ({...p, loading: false})))
-  }
+
+      if (setSchedules) setSchedules(schedules ?? []);
+
+      schedules.forEach((s: Schedule) => {
+        if (s.notify) scheduleFeedingReminder(s);
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setFeedStatus((p) => ({ ...p, loading: false }));
+    }
+  };
+
 
   const submitForm = (finalData: ScheduleFormData) => {
     setStatus((p)=> ({...p , loading: true}))
     clearValidationErrors()
 
+    const onSuccess = () => {}
     fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/feeding`, {
       method : "PUT",
       headers : {

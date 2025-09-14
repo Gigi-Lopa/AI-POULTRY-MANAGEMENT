@@ -1,12 +1,15 @@
 import { clearAllCache } from "@/cache";
+import { NetworkStatusContext } from "@/context/NetworkStatusProvider";
 import styles from "@/styles/main";
 import { useRouter } from "expo-router";
-import { Bird, LogOut } from "lucide-react-native";
-import React from "react";
+import { Bird, LogOut, Wifi, WifiOff } from "lucide-react-native";
+import React, { useContext } from "react";
 import { Platform, Text, TouchableOpacity, View } from "react-native";
+import Spinner from "./Spinner";
 
 const Header = () => {
   const router = useRouter();
+  const {isOffline} = useContext(NetworkStatusContext);
 
   const handleLogOut = async () => {
     try {
@@ -34,9 +37,21 @@ const Header = () => {
             Poultry Management
           </Text>
         </View>
-        <TouchableOpacity onPress={handleLogOut} >
-          <LogOut/>
-        </TouchableOpacity>
+        <View style = {[styles.flexRow]}>
+          <View style = {[{marginRight : 15}]}>
+            {
+              isOffline === null ?
+              <Spinner size={"small"}/>
+              : isOffline === false ?
+              <Wifi size={18} color={styles.bg_success.backgroundColor}></Wifi> : 
+              <WifiOff size={18} color={styles.bg_danger.backgroundColor}/> 
+            }
+          </View>
+          <TouchableOpacity onPress={handleLogOut} >
+            <LogOut size={18}/>
+          </TouchableOpacity>
+      
+        </View>
       </View>
     </View>
   );

@@ -33,6 +33,40 @@ export const loadFromCache = async <T = any>(key: string): Promise<T | null> => 
   }
 };
 
+
+export const updateCache = async (
+  key: string,
+  newData:any,
+  type: "data" | "syncData"
+) => {
+  try {
+    await ensureCacheDir();
+    const fileUri = CACHE_DIR + key + ".json";
+
+    let existingData: any = { results: [] };
+    const fileInfo = await FileSystem.getInfoAsync(fileUri);
+    if (fileInfo.exists) {
+      const raw = await FileSystem.readAsStringAsync(fileUri);
+      existingData = JSON.parse(raw);
+    }
+
+    const updatedData =
+      type === "syncData"
+        ? { ...existingData, ...newData }
+        : {
+            ...existingData,
+            results: [...(existingData.results || []), ...(newData || [])],
+          }; 
+
+    await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(updatedData));
+    return updatedData;
+  } catch (error) {
+    console.error("Error updating cache:", error);
+    return null;
+  }
+};
+
+
 export const clearCache = async (key: string) => {
   try {
     const fileUri = CACHE_DIR + key + ".json";

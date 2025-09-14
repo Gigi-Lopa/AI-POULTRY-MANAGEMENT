@@ -1,6 +1,8 @@
-import { loadFromCache } from "@/cache";
+import { loadFromCache, updateCache } from "@/cache";
+import { NetworkStatusContext } from "@/context/NetworkStatusProvider";
 import { FlockFormData, FlockFormDataValidation, FlockResponse } from "@/types";
-import { useEffect, useState } from "react";
+import { submitData } from "@/utils/submitHandlers";
+import { useContext, useEffect, useState } from "react";
 
 interface props{
   closeModal: () => void;
@@ -8,11 +10,12 @@ interface props{
 }
 
 export default function useAddFlock({closeModal, setFlocks}: props){
+    const {isOffline} = useContext(NetworkStatusContext);
     const [breedType, setBreedType] = useState<string>();
     const [breadPurpose, setBreedPurpose] = useState<string>();
     const [USER_ID, setUSER_ID] = useState(null);
     const [status, setStatus] = useState({
-        error : false,
+        error : "",
         loading: false
     })
 
@@ -51,7 +54,7 @@ export default function useAddFlock({closeModal, setFlocks}: props){
     const handleChange = (field: keyof FlockFormData, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
-    const validate = () => {
+    const validate = async () => {
         let isValid = true;
 
         Object.keys(formData).forEach((key) => {
@@ -72,38 +75,72 @@ export default function useAddFlock({closeModal, setFlocks}: props){
 
         if (isValid) {
         setStatus((prev)=> ({...prev, loading : true}))
-        fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/flocks`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                flockOwner: USER_ID, // remove after login is working
+        const DATA: FlockResponse[] =  [
+            {   
+                _id : "",
+                flockOwner: USER_ID ?? "", 
                 flockName: formData.flockName,
-                breedType: breedType,
+                breedType: breedType ?? "",
                 numberOfBirds: formData.numberOfBirds,
                 age: formData.age,
                 locationCoop: formData.locationCoop,
-                flockPurpose: breadPurpose,
-            }),
-        })
-        .then((response) => response.json())
-        .then((response) => {
+                flockPurpose: breadPurpose ?? "",
+            }
+        ]
+        const onSuccess = (response: any) => {
             if (response?.success) {
-                setFlocks((prevFlocks) => [...prevFlocks, response.flock]);
+                const newFlocks = response.results ?? [response.results];
+               
+               setFlocks((prevFlocks) => [
+                ...prevFlocks,
+                ...newFlocks.filter(
+                    (nf: any) => !prevFlocks.some((pf) => pf._id === nf._id) 
+                ),
+                ]);
+
                 closeModal();
             }
-        })
-        .catch((error) => {
-            console.error("Error add flock:" + error);
-            setStatus(p => ({...p, error: true}))
-        })
-        .finally(()=>
+        };
+
+        const onError = (error : any)=> {  
+            console.log(error)
+            setStatus(p => ({...p, error: error.message}))
+        }
+
+        const onFinal = () =>{
             setTimeout(()=>{
-                setStatus({error: false, loading : false})
+            setStatus({error: "", loading : false})
             }, 3500)
-        )}
-    };
+        }
+        const normalized = DATA.map((flock:any) => ({
+            ...flock,
+            breedType: flock.breedType?.label ?? flock.breedType,
+            flockPurpose: flock.flockPurpose?.label ?? flock.flockPurpose,
+        }));
+        
+        await updateCache("flocks", normalized, "data")
+        await updateCache("updates", {
+            flocks :  DATA
+        }, "syncData")
+        
+        if(!isOffline){
+            submitData(
+                DATA,
+                "/api/flocks",
+                "POST",
+                onSuccess,
+                onError,
+                onFinal
+            )     
+        } else {
+            onSuccess({
+                success : true,
+                results :  normalized
+            })
+        }
+       
+    }
+};
 
     return {
         validationForm,

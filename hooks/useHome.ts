@@ -1,9 +1,13 @@
-import { loadFromCache } from "@/cache";
+import { clearCache, loadFromCache, saveToCache, updateCache } from "@/cache";
+import { NetworkStatusContext } from "@/context/NetworkStatusProvider";
 import type { AIRecommendation, FlockResponse, Schedule, VaccinationRecord } from "@/types";
+import { submitData } from "@/utils/submitHandlers";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { ToastAndroid } from "react-native";
 export default function useHome() {
   const router = useRouter();
+  const {isOffline} = useContext(NetworkStatusContext)
   const [dashboardCounts, setDashboardCounts] = useState({
     flocks :0,
     birds : 0
@@ -22,7 +26,7 @@ export default function useHome() {
   const [AI_RECOMMENDATIONS, setAI_RECOMMENDATIONS] = useState<AIRecommendation[]>([])
   const [status, setStatus] = useState({
     loading : false,
-    error : false
+    error : ""
   })
   const openAddFlockModal = () => setIsAFlockMVisible(true);
   const closeAddFlockModal = () => setIsAFlockMVisible(false);
@@ -46,15 +50,23 @@ export default function useHome() {
   const getDashboardData = () => {
     fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/dashboard?id=${USER_ID}`)
     .then(response => response.json())
-    .then(response => {
+    .then(async(response) => {
         if(response.success){
+          await clearCache("counts");
+          await saveToCache("counts", response);
+
           setDashboardCounts({
             flocks: response.counts.flocksCount,
             birds : response.counts.birdCounts
           })
         }
     })
-    .catch(error => {
+    .catch(async(error) => {
+      const response = await loadFromCache("counts")
+      setDashboardCounts({
+        flocks: response.counts.flocksCount,
+        birds : response.counts.birdCounts
+      })
       console.error(error)
     })
   }
@@ -63,14 +75,21 @@ export default function useHome() {
     setDashboardAIStatus((p)=>({...p, loading: true}))
     fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/ai?id=${USER_ID}`)
     .then(response => response.json())
-    .then(response => {
+    .then(async(response) => {
       if(response.success){
+        await clearCache("recommendations")
+        await saveToCache("recommendations", response)
         setAI_RECOMMENDATIONS(response.AI_RECOMMENDATIONS); 
       }
     })
-    .catch(error => console.error(error))
+    .catch(async (error) =>{
+      const response = await loadFromCache("recommendations")
+      setAI_RECOMMENDATIONS(response.AI_RECOMMENDATIONS); 
+      console.error(error)
+    })
     .finally(()=> setDashboardAIStatus((p)=>({...p, loading: false})))
   }
+
   const getFlocks = async () => {
     setStatus((p)=> ({...p, loading: true}));
     try {
@@ -78,33 +97,69 @@ export default function useHome() {
         const data = await res.json();
 
     if (data?.success) {
-        setFlocks(data.flocks);
+      await clearCache("flocks")
+      await saveToCache("flocks", {
+        results: data.results
+      })
+      setFlocks(data.results);
+
     } else {
-      setStatus((p)=> ({...p, error: true}));
+      setStatus((p)=> ({...p, error: data?.message  ?? "Something wen't wrong"}));
     }
     } catch (err) {
+      
+      const data = await loadFromCache("flocks");
+      if(data) setFlocks(data.results);
+      
       console.error(err);
-      setStatus((p)=> ({...p, error: true}));
+
     } finally {
-      setStatus((p)=> ({loading : false, error: false}));
+      setStatus((p)=> ({loading : false, error: ""}));
     }
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     const getToken = async () => {
-      const token = await loadFromCache("token")
-      setUSER_ID(token.userID)
-    }
-    getToken()
-  }, [])
+    
+      const token = await loadFromCache("token");
+      if (token) {
+        setUSER_ID(token.userID);
+      }
+    };
+     const sync = async () => {
+      const DATA = await loadFromCache("updates");
+      if (!DATA?.flocks?.length) return;
 
-  useEffect(()=>{
+      const onSuccess = (response:any) => {
+        ToastAndroid.show("Flocks synchronization successful", ToastAndroid.SHORT);
+        setFlocks((prevFlocks) => [
+          ...prevFlocks,
+          ...response.results.filter(
+              (nf: any) => !prevFlocks.some((pf) => pf._id === nf._id) 
+          ),
+        ]);
+        updateCache("updates", { flocks: [] }, "syncData");
+      };
+
+      submitData(DATA.flocks, "/api/flocks", "POST", onSuccess);
+    };
+
+    sync();
+    getToken();
+  }, []);
+
+  useEffect(() => {
     if (!USER_ID) return;
-    getDashboardData()
-    setTimeout(()=>{getAIRecommendations()},2500)
-  }, [USER_ID,flocks])
+    getFlocks();
+  }, [USER_ID]);
 
-  useEffect(()=>{getFlocks()}, [USER_ID])
+  useEffect(() => {
+    if (!USER_ID) return;
+
+    getDashboardData();
+    //setTimeout(() => getAIRecommendations(), 2500);
+  }, [USER_ID, flocks]);
+
 
   const addScheduleSuccessCallBack = (schedule :any)=>{
     closeAddScheduleModal()

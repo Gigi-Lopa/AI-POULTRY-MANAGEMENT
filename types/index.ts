@@ -138,3 +138,6 @@ export interface AIChat {
 export interface Token {
   userID : string
 }
+export interface Network {
+  isOffline  : boolean | null
+}

@@ -1,7 +1,8 @@
+import { NetworkStatusContext } from '@/context/NetworkStatusProvider'
 import styles from '@/styles/main'
 import { FlockResponse } from '@/types'
 import { Bird, Calendar, LocateIcon, Trash } from 'lucide-react-native'
-import React from 'react'
+import React, { useContext } from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 interface prop{
     flock: FlockResponse,
@@ -9,6 +10,7 @@ interface prop{
 }
 
 const FlockCard = ({flock, deleteFlock}:prop) => {
+    const {isOffline} = useContext(NetworkStatusContext)
   return (
     <View style = {[styles.poultryCard, styles.rounded, styles.bg_white]}>
         <View style = {[styles.flexRow, styles.justifyBetween]}>
@@ -18,8 +20,8 @@ const FlockCard = ({flock, deleteFlock}:prop) => {
                 <Text style = {[styles.p]}>{flock.flockPurpose}</Text>
 
             </View>
-            <TouchableOpacity onPress={()=>deleteFlock(flock._id)}>
-                <Trash color={styles.bg_danger.backgroundColor} size ={15}/>
+            <TouchableOpacity disabled = {isOffline ?? true} onPress={()=>deleteFlock(flock._id)}>
+                <Trash color={isOffline === false ? styles.bg_danger.backgroundColor : styles.bg_danger_30.backgroundColor} size ={15}/>
             </TouchableOpacity>
         </View>        
         <View style = {[styles.w100, styles.flexRow, styles.justifyBetween, {marginTop : 5}]}>
