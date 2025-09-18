@@ -1,6 +1,7 @@
 import { loadFromCache } from "@/cache";
+import { NetworkStatusContext } from "@/context/NetworkStatusProvider";
 import { AIChat } from "@/types";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 export default function useSymptomAnalysis (){
 
@@ -8,6 +9,7 @@ export default function useSymptomAnalysis (){
     const [suggestions, setSuggestions]= useState<AIChat[]>([])
     const [prompt, setPrompt] = useState("")
     const [USER_ID, setUSER_ID] = useState(null);
+    const {isOffline} = useContext(NetworkStatusContext);
 
     useEffect(()=>{
         const getToken = async () => {
@@ -18,6 +20,9 @@ export default function useSymptomAnalysis (){
     }, [])
 
     const getSuggestion = () => {
+        if(isOffline === true) return;
+        if(prompt.trim().length === 0) return
+         
         setLoading(true);
         fetch(`${process.env.EXPO_PUBLIC_IP_ADDRESS}/api/ai`, {
             method: "POST",
